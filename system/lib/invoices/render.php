@@ -546,7 +546,7 @@ $is_cancelled_invoice = isset($d['status']) && strcasecmp((string) $d['status'],
         <table width="100%" style="border: 0; margin-bottom: 18px;">
             <tr>
                 <td style="border: 0; width: 22%; text-align: center; vertical-align: top;">
-                    <img id="image" src="<?php echo $logo_src; ?>" alt="logo" style="max-width: 120px; max-height: 50px; margin-bottom: 6px;" /><br/>
+                    <img id="image" src="<?php echo $logo_src; ?>" alt="logo" style="max-width: 170px; max-height: 100px; margin-bottom: 8px;" /><br/>
                     <?php if ($show_zatca_qr) { ?>
                         <div style="border: 1px solid #aaa; padding: 3px; display: inline-block; border-radius: 0;">
                             <img src="<?=$qr_code?>" style="width: 170px; height: auto; aspect-ratio: 1 / 1; object-fit: contain; max-width: 100%;" />

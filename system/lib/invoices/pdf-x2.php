@@ -111,7 +111,7 @@ $logo_path = APP_URL . '/storage/system/' . $logo_file;
 <table class="no-border" style="width:100%; margin-bottom:4px;">
     <tr>
         <td style="border:0; width:22%; vertical-align:top; text-align:center;">
-            <img src="<?php echo htmlspecialchars($logo_path); ?>" style="max-width:100px; max-height:40px; margin-bottom:4px;" /><br/>
+            <img src="<?php echo htmlspecialchars($logo_path); ?>" style="max-width:140px; max-height:90px; margin-bottom:6px;" /><br/>
             <?php if ($show_zatca_qr) { ?>
                 <img src="<?php echo $qr_code_image; ?>" style="width:140px; height:140px; border:1px solid #9aa6b2; padding:4px; background:#fff;" />
             <?php } else { ?>
