@@ -1,0 +1,162 @@
+{
+  "company_name": "",
+  "marketing_plan": {
+    "phases": [
+      {
+        "phase_name": "Before Lead Generation",
+        "steps": [
+          {
+            "step_id": 1,
+            "title": "",
+            "objective": "",
+            "details": {
+              "target_audience": "",
+              "key_activities": [
+
+              ],
+              "channels": [
+
+              ]
+            }
+          },
+          {
+            "step_id": 2,
+            "title": "",
+            "objective": "",
+            "details": {
+              "messaging_focus": "",
+              "key_activities": [
+
+              ],
+              "channels": [
+
+              ]
+            }
+          },
+          {
+            "step_id": 3,
+            "title": "",
+            "objective": "",
+            "details": {
+              "ad_platforms": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "metrics": [
+
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "phase_name": "During Lead Generation",
+        "steps": [
+          {
+            "step_id": 4,
+            "title": "",
+            "objective": "",
+            "details": {
+              "incentive_types": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "channels": [
+
+              ]
+            }
+          },
+          {
+            "step_id": 5,
+            "title": "",
+            "objective": "",
+            "details": {
+              "campaign_structure": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "metrics": [
+
+              ]
+            }
+          },
+          {
+            "step_id": 6,
+            "title": "",
+            "objective": "",
+            "details": {
+              "offer_types": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "metrics": [
+
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "phase_name": "After the Prospect Becomes a Customer",
+        "steps": [
+          {
+            "step_id": 7,
+            "title": "",
+            "objective": "",
+            "details": {
+              "focus_areas": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "metrics": [
+
+              ]
+            }
+          },
+          {
+            "step_id": 8,
+            "title": "",
+            "objective": "",
+            "details": {
+              "program_structure": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "metrics": [
+
+              ]
+            }
+          },
+          {
+            "step_id": 9,
+            "title": "",
+            "objective": "",
+            "details": {
+              "incentive_options": [
+
+              ],
+              "key_activities": [
+
+              ],
+              "metrics": [
+
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

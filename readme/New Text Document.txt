@@ -1,0 +1,285 @@
+You are a senior ERP/Accounting system architect and backend engineer.
+
+Your task is to extend an existing SaaS invoicing system (similar to CloudOnex) that already supports:
+- Customers
+- Invoices
+- Basic payments
+- ZATCA Phase 2 compliant e-invoicing
+
+You must implement a COMPLETE, PRODUCTION-GRADE, DOUBLE-ENTRY ACCOUNTING SYSTEM with strict financial integrity.
+
+========================
+🎯 OBJECTIVE
+========================
+Build a fully integrated accounting system including:
+
+1. General Ledger (GL)
+2. Accounts Receivable (AR)
+3. Accounts Payable (AP)
+4. Expense Management
+5. Cash & Bank Management
+6. Financial Reporting
+7. VAT / Tax Compliance (ZATCA aligned)
+8. Audit & Controls
+
+========================
+⚠️ CORE ACCOUNTING RULES (MANDATORY)
+========================
+- Every transaction MUST create a balanced journal entry
+- Total Debit = Total Credit (ALWAYS)
+- NO direct balance updates allowed
+- NO deletion of financial records (only reversal entries)
+- All modules must POST to GL
+- All reports must be generated ONLY from GL
+- Use database transactions (ROLLBACK if failure)
+
+========================
+🧱 DATABASE SCHEMA (MySQL)
+========================
+
+-- CHART OF ACCOUNTS
+CREATE TABLE accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE,
+    name VARCHAR(255),
+    type ENUM('asset','liability','equity','revenue','expense'),
+    parent_id INT NULL,
+    is_active TINYINT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- JOURNAL ENTRIES
+CREATE TABLE journal_entries (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    entry_date DATE,
+    reference VARCHAR(100),
+    description TEXT,
+    source_module VARCHAR(50),
+    source_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE journal_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    journal_entry_id BIGINT,
+    account_id INT,
+    debit DECIMAL(15,2) DEFAULT 0,
+    credit DECIMAL(15,2) DEFAULT 0,
+    FOREIGN KEY (journal_entry_id) REFERENCES journal_entries(id),
+    FOREIGN KEY (account_id) REFERENCES accounts(id)
+);
+
+-- CUSTOMERS & VENDORS
+CREATE TABLE customers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    email VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE vendors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- INVOICES (AR)
+CREATE TABLE invoices (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT,
+    total DECIMAL(15,2),
+    vat_amount DECIMAL(15,2),
+    status ENUM('draft','posted','paid'),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- BILLS (AP)
+CREATE TABLE bills (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT,
+    total DECIMAL(15,2),
+    vat_amount DECIMAL(15,2),
+    status ENUM('draft','approved','paid'),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- PAYMENTS
+CREATE TABLE payments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('receive','pay'),
+    amount DECIMAL(15,2),
+    account_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE payment_allocations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_id BIGINT,
+    invoice_id BIGINT NULL,
+    bill_id BIGINT NULL,
+    amount DECIMAL(15,2)
+);
+
+-- BANK / CASH
+CREATE TABLE bank_accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255),
+    account_number VARCHAR(100),
+    balance DECIMAL(15,2) DEFAULT 0
+);
+
+-- TAX
+CREATE TABLE tax_codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50),
+    rate DECIMAL(5,2)
+);
+
+-- AUDIT LOG
+CREATE TABLE audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(50),
+    table_name VARCHAR(50),
+    record_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+========================
+🧠 JOURNAL POSTING ENGINE (CORE LOGIC)
+========================
+
+FUNCTION create_journal_entry(data):
+    BEGIN TRANSACTION
+
+    INSERT INTO journal_entries (...)
+
+    FOR each line in data.lines:
+        INSERT INTO journal_items (...)
+
+    VALIDATE:
+        SUM(debit) == SUM(credit)
+        IF NOT → ROLLBACK & ERROR
+
+    COMMIT
+
+========================
+💰 ACCOUNTS RECEIVABLE (AR)
+========================
+
+WHEN invoice is POSTED:
+    Dr Accounts Receivable
+    Cr Revenue
+    Cr VAT Payable
+
+WHEN payment RECEIVED:
+    Dr Bank
+    Cr Accounts Receivable
+
+FEATURES:
+- Customer ledger
+- Aging report (30/60/90)
+- Partial payments
+- Payment allocation
+- Bad debt:
+    Dr Bad Debt Expense
+    Cr AR
+
+========================
+🧾 ACCOUNTS PAYABLE (AP)
+========================
+
+WHEN bill is APPROVED:
+    Dr Expense
+    Dr VAT Recoverable
+    Cr Accounts Payable
+
+WHEN payment MADE:
+    Dr Accounts Payable
+    Cr Bank
+
+FEATURES:
+- Vendor ledger
+- Approval workflow
+- Recurring bills
+
+========================
+💸 CASH & BANK
+========================
+
+TRANSFER:
+    Dr Bank B
+    Cr Bank A
+
+BANK RECONCILIATION:
+- Match transactions
+- Show cleared vs pending
+
+========================
+🧮 VAT (ZATCA COMPLIANCE)
+========================
+
+Sales:
+    VAT → Payable
+
+Purchases:
+    VAT → Recoverable
+
+GENERATE:
+- VAT reports
+- Link ZATCA invoice XML to journal entries
+
+========================
+📊 REPORTS (FROM GL ONLY)
+========================
+
+TRIAL BALANCE:
+    SUM(debit), SUM(credit) GROUP BY account
+
+PROFIT & LOSS:
+    Revenue - Expenses
+
+BALANCE SHEET:
+    Assets = Liabilities + Equity
+
+CASH FLOW:
+    Derived from GL
+
+========================
+🔐 CONTROLS
+========================
+
+- Period lock (no edit after closing)
+- Role permissions
+- Audit logs
+- Reversal entries instead of delete
+- Prevent unbalanced entries
+- Prevent posting to inactive accounts
+
+========================
+🔄 SYSTEM FLOW
+========================
+
+Invoice → Journal Entry → GL → Reports  
+Bill → Journal Entry → GL  
+Payment → Journal Entry → GL  
+
+========================
+🚀 FINAL INSTRUCTION
+========================
+
+Build this as a modular, scalable accounting engine.
+
+STRICTLY enforce:
+- Double-entry accounting
+- GL as single source of truth
+- ACID transactions
+- Data integrity
+
+OPTIONAL:
+- Provide REST APIs
+- Provide PHP service classes
+- Provide sample transactions
+- Provide optimized SQL queries for reports
+
+END OF TASK

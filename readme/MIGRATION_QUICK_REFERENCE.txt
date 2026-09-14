@@ -1,0 +1,87 @@
+# Quick Database Migration Reference
+
+## 🚀 Fresh Installation (New PC)
+
+Simply run the standard installation wizard. Everything is automatic:
+
+```
+1. Open browser → http://yourdomain.com/install/
+2. Follow the wizard steps
+3. Migrations apply automatically ✓
+4. Done!
+```
+
+## ⬆️ Upgrading Existing Installation
+
+### Option A: Automatic (Easy) - Recommended
+```bash
+# From root directory
+php migrate-duplicate-invoice-prevention.php
+php migrate-zatca-columns.php
+```
+
+### Option B: Manual SQL (If PHP not available)
+```bash
+# Using MySQL
+mysql -u root -p database_name < application/storage/zatca_phase2_columns.sql
+
+# Or use phpMyAdmin:
+# - SQL tab → paste file contents → Execute
+```
+
+## ✅ Verify Migrations Worked
+
+```sql
+-- Check for new index
+SHOW INDEXES FROM sys_invoices WHERE Key_name = 'unique_invoicenum_type';
+
+-- Check for ZATCA columns
+SHOW COLUMNS FROM sys_invoices WHERE Field LIKE 'zatca_%';
+
+-- Should see:
+-- ✓ unique_invoicenum_type index
+-- ✓ 13 zatca_* columns
+```
+
+## 🐛 Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| "Duplicate entry" error | Clean up duplicate invoice numbers in database |
+| "Access denied" | Check DB credentials in `system/config.php` |
+| Migration didn't run | Check file permissions and PHP error logs |
+| "Column already exists" | Normal - migration smartly skips if already applied |
+
+## 📋 What Changed
+
+| Feature | Benefit | Location |
+|---------|---------|----------|
+| Unique invoice numbers | Prevents duplicates | Index on sys_invoices |
+| ZATCA compliance | e-invoicing support | 13 new columns |
+| Auto-migrations | One-step upgrades | db_import.php |
+
+## 🔒 Safety Guarantees
+
+- ✅ Idempotent (safe to run multiple times)
+- ✅ Live-server safe (no downtime)
+- ✅ Works with existing data
+- ✅ Automatic backup recommended
+
+## 📖 Full Documentation
+
+- Installation details: `install/INSTALLATION_UPDATES.md`
+- Upgrade guide: `readme/DATABASE_MIGRATIONS_GUIDE.md`
+- Migration scripts: `migrate-*.php`
+- SQL migrations: `application/storage/zatca_phase2_columns.sql`
+
+## 💡 Tips
+
+- Always backup database before migrations
+- Test in staging environment first
+- Keep migration scripts for future reference
+- Check error logs if issues occur
+
+---
+
+**For Admins:** See DATABASE_MIGRATIONS_GUIDE.md for detailed upgrade procedures
+**For Developers:** See install/INSTALLATION_UPDATES.md for technical details

@@ -1,0 +1,12 @@
+{
+    "success": false,
+    "stage": "compliance",
+    "api_base": "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal/",
+    "compliance": {
+        "success": false,
+        "status_code": 400,
+        "message": "Compliance CSID request failed with status code 400. OTP is expired, already used, or invalid. Please generate a fresh OTP from the ZATCA portal and run again immediately.",
+        "response_body": "Invalid Request"
+    },
+    "production": null
+}

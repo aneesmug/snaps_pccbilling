@@ -1,0 +1,12 @@
+/vendor/
+/system/config.php
+/snapsbilling.zip
+*.bat.bat
+/storage/*
+/documents/
+
+# Private signing keys / install-specific certificates (never commit real keys)
+/system/Certificates/
+**/*private-key*.pem
+**/*priv-key*.pem
+**/PrivateKey.pem

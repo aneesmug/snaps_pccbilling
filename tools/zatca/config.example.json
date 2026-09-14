@@ -1,0 +1,6 @@
+{
+  "otp": "345643",
+  "csr": "D:/xampp/htdocs/snaps_billing_finance/system/Certificates/snaps-request.csr",
+  "api_base": "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal",
+  "output_file": "tools/zatca/latest-csids.json"
+}
