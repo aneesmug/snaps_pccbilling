@@ -27,7 +27,7 @@
                     <tbody>
                     {foreach $d as $ds}
                         <tr id="{$ds['id']}">
-                            <td> {if $ds['is_default'] eq '1'} <label class="label label-success label-sm">{$_L['Default']}</label> {/if} {$ds['name']} </td>
+                            <td> {if $ds['is_default'] eq '1'} <label class="label label-success label-sm">{$_L['Default']}</label> {/if} {if $ds['is_inclusive'] eq '1'} <label class="label label-info label-sm">{__('Inclusive')}</label> {/if} {$ds['name']} </td>
                             <td>
 
 

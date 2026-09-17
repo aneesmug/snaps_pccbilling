@@ -1530,6 +1530,7 @@ switch ($action) {
             $item_number = $data['item_code'];
 
             $taxed = isset($data['taxed']) ? $data['taxed'] : false;
+            $tax_inclusive = isset($data['tax_inclusive']) ? $data['tax_inclusive'] : [];
 
             $sTotal = '0';
             $taxTotal = '0';
@@ -1541,6 +1542,7 @@ switch ($action) {
             $taxrate = '0.00';
 
             $taxed_amount = 0.0;
+            $taxed_amount_additive = 0.0;
             $lamount = 0.0;
 
             $discounts = $data['discount'];
@@ -1582,7 +1584,16 @@ switch ($action) {
                 $sTotal += $line_total;
                 $lamount = $line_total;
 
-                $lTaxVal = ($lamount * $lTaxRate) / 100;
+                $lRowInclusive = !empty($tax_inclusive[$i]);
+
+                if ($lRowInclusive) {
+                    // VAT-inclusive: entered amount already includes tax, split it out instead of adding on top
+                    $lTaxVal = $lTaxRate > 0 ? $lamount - ($lamount / (1 + ($lTaxRate / 100))) : 0.0;
+                } else {
+                    $lTaxVal = ($lamount * $lTaxRate) / 100;
+                    // exclusive: this tax isn't in $sTotal yet, so it still needs adding to the grand total
+                    $taxed_amount_additive += $lTaxVal;
+                }
 
                 $taxed_amount += $lTaxVal;
 
@@ -1598,7 +1609,8 @@ switch ($action) {
             $discount_type = _post('discount_type');
             $discount_value = '0.00';
 
-            $fTotal += $taxed_amount;
+            // inclusive-tax rows already have their VAT baked into $sTotal; only exclusive rows need adding
+            $fTotal += $taxed_amount_additive;
 
             $status = _post('status');
             if ($status != 'Draft') {
@@ -1798,10 +1810,19 @@ switch ($action) {
 
                 $d->tax_rate = $tax_rate;
 
-                $item_taxed_amount = round(
-                    ($tax_rate * ($sqty * $samount)) / 100,
-                    2
-                );
+                $item_line_amount = $sqty * $samount;
+
+                if (!empty($tax_inclusive[$i])) {
+                    // VAT-inclusive: entered amount already includes tax, split it out instead of adding on top
+                    $item_taxed_amount = $tax_rate > 0
+                        ? round($item_line_amount - ($item_line_amount / (1 + ($tax_rate / 100))), 2)
+                        : 0.0;
+                } else {
+                    $item_taxed_amount = round(
+                        ($tax_rate * $item_line_amount) / 100,
+                        2
+                    );
+                }
 
                 $d->type = '';
                 $d->relid = '0';
@@ -2294,7 +2315,12 @@ switch ($action) {
                 $sTotal += $samount * $sqty;
                 $lamount = $samount * $sqty;
 
-                $lTaxVal = ($lamount * $lTaxRate) / 100;
+                if ($config['tax_system'] == 'saudi_zatca') {
+                    // VAT-inclusive: entered amount already includes tax, split it out instead of adding on top
+                    $lTaxVal = $lTaxRate > 0 ? $lamount - ($lamount / (1 + ($lTaxRate / 100))) : 0.0;
+                } else {
+                    $lTaxVal = ($lamount * $lTaxRate) / 100;
+                }
 
                 $taxed_amount += $lTaxVal;
 
@@ -2325,7 +2351,12 @@ switch ($action) {
                 '.',
                 ''
             );
-            $fTotal = $fTotal + $taxed_amount - $actual_discount;
+            if ($config['tax_system'] == 'saudi_zatca') {
+                // $sTotal already includes VAT, don't add it again
+                $fTotal = $fTotal - $actual_discount;
+            } else {
+                $fTotal = $fTotal + $taxed_amount - $actual_discount;
+            }
 
             $status = _post('status');
 
@@ -2432,10 +2463,19 @@ switch ($action) {
                         $d->taxed = '1';
                     }
 
-                    $item_taxed_amount = round(
-                        ($tax_rate * 100) / ($sqty * $samount),
-                        2
-                    );
+                    $item_line_amount = $sqty * $samount;
+
+                    if ($config['tax_system'] == 'saudi_zatca') {
+                        // VAT-inclusive: entered amount already includes tax, split it out instead of adding on top
+                        $item_taxed_amount = $tax_rate > 0
+                            ? round($item_line_amount - ($item_line_amount / (1 + ($tax_rate / 100))), 2)
+                            : 0.0;
+                    } else {
+                        $item_taxed_amount = round(
+                            ($tax_rate * $item_line_amount) / 100,
+                            2
+                        );
+                    }
 
                     $d->type = '';
                     $d->relid = '0';

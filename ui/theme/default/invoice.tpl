@@ -955,7 +955,7 @@
                                                     </td>
                                                     <td><select class="form-select taxed" name="taxed[]">
                                                             {foreach $t as $ts}
-                                                                <option value="{$ts['rate']}"
+                                                                <option value="{$ts['rate']}" data-inclusive="{$ts['is_inclusive']}"
                                                                         {if $item->tax_rate eq $ts['rate']}selected{/if}>{$ts['name']}</option>
                                                             {/foreach} </select></td>
 
@@ -996,7 +996,7 @@
                                             </td>
                                             <td><select class="form-select taxed" name="taxed[]">
                                                     {foreach $t as $ts}
-                                                        <option value="{$ts['rate']}"
+                                                        <option value="{$ts['rate']}" data-inclusive="{$ts['is_inclusive']}"
                                                                 {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option>
                                                     {/foreach} </select></td>
 
@@ -1410,6 +1410,8 @@
 
             var totalTaxVal = 0;
 
+            var totalTaxValAdditive = 0;
+
 
             var lineTotalWithoutTax;
 
@@ -1426,6 +1428,8 @@
                 invTotal = 0;
 
                 totalTaxVal = 0;
+
+                totalTaxValAdditive = 0;
 
                 tax_val = 0;
 
@@ -1530,6 +1534,7 @@
 
 
                     totalTaxVal += tax_val;
+                    totalTaxValAdditive += tax_val;
 
                     totalLineTotalWithoutTax += lineTotalWithoutTax;
 
@@ -1579,7 +1584,9 @@
                     }
 
 
-                    c_taxed = $(this).closest('tr').find('.taxed').val();
+                    var $taxedSelect = $(this).closest('tr').find('.taxed');
+                    c_taxed = $taxedSelect.val();
+                    var c_taxed_inclusive = $taxedSelect.find('option:selected').data('inclusive') == 1;
 
 
 
@@ -1604,7 +1611,7 @@
                     lineTotal = (lineTotal-lineDiscount);
 
 
-                    if (c_taxed === '' || c_taxed === null) {
+                    if (c_taxed === '' || c_taxed === null || parseFloat(c_taxed) === 0) {
 
                         tax_val = 0;
 
@@ -1612,14 +1619,20 @@
                     else {
                         c_taxed = parseFloat(c_taxed).toFixed(3);
 
-                        tax_val = (lineTotal * c_taxed) / 100;
+                        if (c_taxed_inclusive) {
+                            // VAT-inclusive: entered price already includes tax, split it out instead of adding on top
+                            tax_val = lineTotal - (lineTotal / (1 + (c_taxed / 100)));
+                            // lineTotal unchanged, already includes VAT
+                        }
+                        else {
+                            tax_val = (lineTotal * c_taxed) / 100;
 
+                            //  console.log(c_taxed);
+                            //  console.log(lineTotal);
 
-
-                        //  console.log(c_taxed);
-                        //  console.log(lineTotal);
-
-                        lineTotal = lineTotal + tax_val;
+                            lineTotal = lineTotal + tax_val;
+                            totalTaxValAdditive += tax_val;
+                        }
                     }
 
 
@@ -1652,7 +1665,7 @@
 
                 totalDiscount = parseFloat(totalDiscount);
 
-                invTotal = totalLineTotalWithoutTax - totalDiscount + totalTaxVal;
+                invTotal = totalLineTotalWithoutTax - totalDiscount + totalTaxValAdditive;
 
                 var totalItems = 0;
                 $.each($('.qty'), function () {
@@ -2026,7 +2039,7 @@
 
                 $invoice_items.find('tbody')
                     .append(
-                        '<tr><td class="text-center align-middle"><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__('Add Product OR Service')}"><i class="fal fa-search"></i></button></td><td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value=""> <input type="hidden" name="item_code[]" value=""> </td> <td><input type="text" class="form-control qty" value="" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value=""></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + rowNum + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td><td class="text-center align-middle row-action-cell"><button type="button" class="btn btn-danger btn-sm row-remove" data-bs-toggle="tooltip" data-placement="top" title="{__('Delete')}"><i class="fal fa-minus"></i></button></td></tr>'
+                        '<tr><td class="text-center align-middle"><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__('Add Product OR Service')}"><i class="fal fa-search"></i></button></td><td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value=""> <input type="hidden" name="item_code[]" value=""> </td> <td><input type="text" class="form-control qty" value="" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value=""></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + rowNum + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" data-inclusive="{$ts['is_inclusive']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td><td class="text-center align-middle row-action-cell"><button type="button" class="btn btn-danger btn-sm row-remove" data-bs-toggle="tooltip" data-placement="top" title="{__('Delete')}"><i class="fal fa-minus"></i></button></td></tr>'
                     );
 
                 {/if}
@@ -2152,7 +2165,7 @@
 
                     $invoice_items.find('tbody')
                         .append(
-                            '<tr><td class="text-center align-middle"><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__('Add Product OR Service')}"><i class="fal fa-search"></i></button></td><td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value="' + item_name + '"> <input type="hidden" name="item_code[]" value="' + item_code + '"></td> <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + item_price + '"></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + rowNum + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td><td class="text-center align-middle row-action-cell"><button type="button" class="btn btn-danger btn-sm row-remove" data-bs-toggle="tooltip" data-placement="top" title="{__('Delete')}"><i class="fal fa-minus"></i></button></td></tr>'
+                            '<tr><td class="text-center align-middle"><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__('Add Product OR Service')}"><i class="fal fa-search"></i></button></td><td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value="' + item_name + '"> <input type="hidden" name="item_code[]" value="' + item_code + '"></td> <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + item_price + '"></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + rowNum + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" data-inclusive="{$ts['is_inclusive']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td><td class="text-center align-middle row-action-cell"><button type="button" class="btn btn-danger btn-sm row-remove" data-bs-toggle="tooltip" data-placement="top" title="{__('Delete')}"><i class="fal fa-minus"></i></button></td></tr>'
                         );
 
                     {/if}
@@ -2358,10 +2371,28 @@
             // });
 
 
+            function syncTaxInclusiveFields() {
+                $invoice_items.find('tbody tr').each(function () {
+                    var $tr = $(this);
+                    var $select = $tr.find('select.taxed');
+                    if (!$select.length) {
+                        return;
+                    }
+                    var inclusive = $select.find('option:selected').data('inclusive') == 1 ? 1 : 0;
+                    var $hidden = $tr.find('input.tax_inclusive_flag');
+                    if (!$hidden.length) {
+                        $hidden = $('<input>', { type: 'hidden', 'class': 'tax_inclusive_flag', name: 'tax_inclusive[]' });
+                        $select.closest('td').append($hidden);
+                    }
+                    $hidden.val(inclusive);
+                });
+            }
+
             $(".progress").hide();
             $("#emsg").hide();
             $("#submit").click(function (e) {
                 e.preventDefault();
+                syncTaxInclusiveFields();
                 $('#ibox_form').block({ message: null });
                 var _url = $("#_url").val();
                 $.post(_url + 'invoices/add-post/', $('#invform').serialize(), function (data) {
@@ -2384,6 +2415,7 @@
 
             $("#save_n_close").click(function (e) {
                 e.preventDefault();
+                syncTaxInclusiveFields();
                 $('#ibox_form').block({ message: null });
                 var _url = $("#_url").val();
                 $.post(_url + 'invoices/add-post/', $('#invform').serialize(), function (data) {
@@ -2569,7 +2601,7 @@
 
                 $invoice_items.find('tbody')
                     .prepend(
-                        '<tr><td class="text-center align-middle"><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__('Add Product OR Service')}"><i class="fal fa-search"></i></button></td><td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value="' + pos_item_name + '"> <input type="hidden" name="item_code[]" value="' + pos_item_number + '"></td> <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + pos_item_price + '"></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + rowNum + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td><td class="text-center align-middle row-action-cell"><button type="button" class="btn btn-danger btn-sm row-remove" data-bs-toggle="tooltip" data-placement="top" title="{__('Delete')}"><i class="fal fa-minus"></i></button></td></tr>'
+                        '<tr><td class="text-center align-middle"><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__('Add Product OR Service')}"><i class="fal fa-search"></i></button></td><td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value="' + pos_item_name + '"> <input type="hidden" name="item_code[]" value="' + pos_item_number + '"></td> <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + pos_item_price + '"></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + rowNum + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" data-inclusive="{$ts['is_inclusive']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td><td class="text-center align-middle row-action-cell"><button type="button" class="btn btn-danger btn-sm row-remove" data-bs-toggle="tooltip" data-placement="top" title="{__('Delete')}"><i class="fal fa-minus"></i></button></td></tr>'
                     );
 
                 {/if}
@@ -2602,7 +2634,7 @@
 
                 $invoice_items.find('tbody')
                     .prepend(
-                        '<tr>  <td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value="' + name + '"> <input type="hidden" name="item_code[]" value=""></td> <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + price + '"></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + item_sl + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td>  </tr>'
+                        '<tr>  <td>' + with_staff_selection + '<input type="text" class="form-control item_name" name="desc[]" value="' + name + '"> <input type="hidden" name="item_code[]" value=""></td> <td><input type="text" class="form-control qty" value="1" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="' + price + '"></td> <td colspan="2"><input type="text" class="form-control item_discount" name="discount[]" value=""></td>  <td> <select class="form-select taxed" name="taxed[]" id="t_' + item_sl + '"> {foreach $t as $ts}  <option value="{$ts['rate']}" data-inclusive="{$ts['is_inclusive']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option> {/foreach} </select></td><td><input type="text" class="form-control lvat" readonly="" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td>  </tr>'
                     );
 
 

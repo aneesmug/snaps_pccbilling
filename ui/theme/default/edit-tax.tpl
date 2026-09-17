@@ -19,6 +19,10 @@
                                 <label for="taxrate">{$_L['Rate']}</label>
                                 <input type="text" class="form-control amount" id="taxrate" name="taxrate" data-a-sign="{$config['currency_code']} "  data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2" value="{if $ib_money_format_apply}{{$d['rate']}}{else}{$d['rate'] + 0}{/if}">
                             </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="is_inclusive" name="is_inclusive" value="1" {if $d['is_inclusive'] eq '1'}checked{/if}>
+                                <label class="form-check-label" for="is_inclusive">{__('Tax-inclusive (entered price already includes this tax)')}</label>
+                            </div>
 
                             <input type="hidden" id="tid" name="tid" value="{$d['id']}">
                             <button type="submit" class="btn btn-primary"> {$_L['Submit']}</button> | {$_L['Or']} <a href="{$_url}tax/list/"> {$_L['Back To The List']}</a>

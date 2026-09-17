@@ -3313,16 +3313,18 @@ CREATE TABLE `sys_tax` (
   `bal` decimal(10,2) DEFAULT 0.00,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `is_default` int(1) DEFAULT NULL
+  `is_default` int(1) DEFAULT NULL,
+  `is_inclusive` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Dumping data for table `sys_tax`
 --
 
-INSERT INTO `sys_tax` (`id`, `name`, `state`, `country`, `rate`, `aid`, `bal`, `created_at`, `updated_at`, `is_default`) VALUES
-(1, 'VAT', NULL, NULL, 15.00, NULL, 0.00, '2018-11-20 13:57:47', '2018-11-20 13:57:47', 1),
-(2, 'NO VAT', NULL, NULL, 0.00, NULL, 0.00, NULL, NULL, NULL);
+INSERT INTO `sys_tax` (`id`, `name`, `state`, `country`, `rate`, `aid`, `bal`, `created_at`, `updated_at`, `is_default`, `is_inclusive`) VALUES
+(1, 'VAT', NULL, NULL, 15.00, NULL, 0.00, '2018-11-20 13:57:47', '2018-11-20 13:57:47', 1, 0),
+(2, 'NO VAT', NULL, NULL, 0.00, NULL, 0.00, NULL, NULL, NULL, 0),
+(3, 'VAT (Inclusive)', NULL, NULL, 15.00, NULL, 0.00, NULL, NULL, NULL, 1);
 
 -- --------------------------------------------------------
 

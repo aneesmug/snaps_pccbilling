@@ -17,6 +17,10 @@
                             <label for="taxrate">{$_L['Rate']}</label>
                             <input type="text" class="form-control" id="taxrate" name="taxrate">
                         </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_inclusive" name="is_inclusive" value="1">
+                            <label class="form-check-label" for="is_inclusive">{__('Tax-inclusive (entered price already includes this tax)')}</label>
+                        </div>
 
 
                         <button type="submit" class="btn btn-primary"><i class="fal fa-check"></i> {$_L['Submit']}</button> | {$_L['Or']} <a href="{$_url}tax/list/"> {$_L['Back To The List']}</a>

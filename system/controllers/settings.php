@@ -3922,6 +3922,7 @@ switch ($action) {
         $d = ORM::for_table('sys_tax')->create();
         $d->name = $taxname;
         $d->rate = $taxrate;
+        $d->is_inclusive = _post('is_inclusive') == '1' ? 1 : 0;
         $d->save();
         r2(U . 'tax/list/', 's', $_L['New TAX Added']);
         break;
@@ -3970,6 +3971,7 @@ switch ($action) {
 
             $d->name = $taxname;
             $d->rate = $taxrate;
+            $d->is_inclusive = _post('is_inclusive') == '1' ? 1 : 0;
             $d->save();
             r2(U . 'settings/edit-tax/' . $tid . '/', 's', 'TAX Saved.');
         } else {
