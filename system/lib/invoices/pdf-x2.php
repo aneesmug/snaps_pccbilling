@@ -17,7 +17,7 @@ if ($config['rtl'] == 1) { ?>
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: dejavusanscondensed; font-size: 9px; line-height: 1.3; color: #222; }
+    body { font-family: xbriyaz, dejavusanscondensed; font-size: 9px; line-height: 1.3; color: #222; }
     table { border-collapse: collapse; width: 100%; }
     table td, table th { border: 1px solid #888; padding: 3px 5px; font-size: 9px; }
 
@@ -108,41 +108,33 @@ $logo_path = APP_URL . '/storage/system/' . $logo_file;
 ?>
 
 <htmlpageheader name="page-header">
-<table class="no-border" style="width:100%; margin-bottom:4px;">
+<table class="no-border" style="width:100%; margin-bottom:8px;">
     <tr>
-        <td style="border:0; width:22%; vertical-align:top; text-align:center;">
-            <img src="<?php echo htmlspecialchars($logo_path); ?>" style="max-width:140px; max-height:90px; margin-bottom:6px;" /><br/>
-            <?php if ($show_zatca_qr) { ?>
-                <img src="<?php echo $qr_code_image; ?>" style="width:140px; height:140px; border:1px solid #9aa6b2; padding:4px; background:#fff;" />
-            <?php } else { ?>
-                <div style="font-size:7px; color:#999; border:1px solid #ddd; padding:8px; width:150px; display:inline-block;">QR code is disabled in settings</div>
-            <?php } ?>
+        <td style="border:0; width:45%; vertical-align:middle; text-align:left;">
+            <img src="<?php echo htmlspecialchars($logo_path); ?>" style="width:190px; max-height:110px;" />
         </td>
-        <td style="border:0; width:78%; vertical-align:top; text-align:right; padding-left:8px;">
-            <div style="font-size:18px; font-weight:700; color:#222;"><?php echo htmlspecialchars($config['CompanyName']); ?></div>
-            <div style="font-size:8px; color:#444; line-height:1.4; margin-bottom:8px;"><?php echo nl2br(htmlspecialchars(strip_tags($config['caddress']))); ?></div>
+        <td style="border:0; width:55%; vertical-align:middle; text-align:right;">
+            <div style="font-size:22px; font-weight:700; color:#222;"><?php echo htmlspecialchars($config['CompanyName']); ?></div>
+            <div style="font-size:8px; color:#555; line-height:1.5; margin-top:3px;"><?php echo nl2br(htmlspecialchars(strip_tags($config['caddress']))); ?></div>
+        </td>
+    </tr>
+</table>
 
-            <table style="width:100%; border:1px solid #aaa; margin-top:40px;">
-                <tr>
-                    <td style="border:0; text-align:right; padding:4px 8px;">
-                        <div style="font-size:14px; font-weight:700; color:#333;"><?php echo $invoice_type_ar; ?></div>
-                        <div style="font-size:9px; color:#555;"><?php echo $invoice_type_label; ?></div>
-                    </td>
-                </tr>
-            </table>
+<div style="border-top:2px solid #333; margin-bottom:8px;"></div>
 
-            <table style="width:100%; border:1px solid #aaa; margin-top:3px;">
-                <tr>
-                    <td style="border:0; border-right:1px solid #aaa; width:50%; padding:3px 6px; vertical-align:top;">
-                        <div style="font-size:7px; color:#666;">Invoice Reference Number</div>
-                        <div style="font-size:10px; font-weight:700; color:#333;"><?php echo htmlspecialchars($invoice_ref); ?></div>
-                    </td>
-                    <td style="border:0; width:50%; padding:3px 6px; vertical-align:top;">
-                        <div style="font-size:7px; color:#666;">Date and Time of Invoice Issuance</div>
-                        <div style="font-size:10px; font-weight:700; color:#333;"><?php echo date('Y/m/d H:i:s', strtotime($issue_timestamp)); ?></div>
-                    </td>
-                </tr>
-            </table>
+<table style="width:100%; border-collapse:collapse; border:1px solid #aaa; margin-bottom:4px;">
+    <tr>
+        <td style="border:0; border-right:1px solid #aaa; width:34%; padding:6px 10px; text-align:center; vertical-align:middle;">
+            <div style="font-size:13px; font-weight:700; color:#333;"><?php echo $invoice_type_ar; ?></div>
+            <div style="font-size:9px; margin-top:2px; color:#666;"><?php echo $invoice_type_label; ?></div>
+        </td>
+        <td style="border:0; border-right:1px solid #aaa; width:33%; padding:6px 10px; text-align:center; vertical-align:middle;">
+            <div style="font-size:7px; color:#666; margin-bottom:3px;">Invoice Reference Number</div>
+            <div style="font-size:11px; font-weight:700; color:#333;"><?php echo htmlspecialchars($invoice_ref); ?></div>
+        </td>
+        <td style="border:0; width:33%; padding:6px 10px; text-align:center; vertical-align:middle;">
+            <div style="font-size:7px; color:#666; margin-bottom:3px;">Date and Time of Invoice Issuance</div>
+            <div style="font-size:11px; font-weight:700; color:#333;"><?php echo date('Y/m/d H:i:s', strtotime($issue_timestamp)); ?></div>
         </td>
     </tr>
 </table>
@@ -227,79 +219,86 @@ $logo_path = APP_URL . '/storage/system/' . $logo_file;
 
 <table class="no-border" style="width:100%; margin-bottom:6px;">
     <tr>
-        <td style="border:0; width:55%;"></td>
-        <td style="border:1px solid #aaa; width:45%; padding:4px 8px; font-size:10px; font-weight:700;">
-            <table class="no-border" style="width:100%; table-layout:fixed;">
-                <tr>
-                    <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Total Excluding VAT</td>
-                    <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;<?php echo $neg_style; ?>"><?php echo $neg_prefix . ib_money_format($display_subtotal, $config, $d['currency_symbol']); ?></td>
-                </tr>
-            </table>
+        <td style="border:0; width:55%; vertical-align:top; text-align:left; padding-top:2px;">
+            <?php if ($show_zatca_qr) { ?>
+                <img src="<?php echo $qr_code_image; ?>" style="width:190px; height:190px; border:1px solid #9aa6b2; padding:4px; background:#fff;" />
+            <?php } else { ?>
+                <div style="font-size:7px; color:#999; border:1px solid #ddd; padding:8px; width:150px; display:inline-block;">QR code is disabled in settings</div>
+            <?php } ?>
         </td>
-    </tr>
+        <td style="border:0; width:45%; vertical-align:top; padding:0;">
+            <table class="no-border" style="width:100%;">
+                <tr>
+                    <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700;">
+                        <table class="no-border" style="width:100%; table-layout:fixed;">
+                            <tr>
+                                <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Total Excluding VAT</td>
+                                <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;<?php echo $neg_style; ?>"><?php echo $neg_prefix . ib_money_format($display_subtotal, $config, $d['currency_symbol']); ?></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
 
-    <?php if (($d['discount']) != '0.00') { ?>
-    <tr>
-        <td style="border:0;"></td>
-        <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700;">
-            <table class="no-border" style="width:100%; table-layout:fixed;">
+                <?php if (($d['discount']) != '0.00') { ?>
                 <tr>
-                    <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Discount <?php if ($d['discount_type'] == 'p') { echo '(' . $d['discount_value'] . ')%'; } ?></td>
-                    <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;"><?php echo ib_money_format($d['discount'], $config, $d['currency_symbol']); ?></td>
+                    <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700;">
+                        <table class="no-border" style="width:100%; table-layout:fixed;">
+                            <tr>
+                                <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Discount <?php if ($d['discount_type'] == 'p') { echo '(' . $d['discount_value'] . ')%'; } ?></td>
+                                <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;"><?php echo ib_money_format($d['discount'], $config, $d['currency_symbol']); ?></td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
-            </table>
-        </td>
-    </tr>
-    <?php } ?>
+                <?php } ?>
 
-    <tr>
-        <td style="border:0;"></td>
-        <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700;">
-            <table class="no-border" style="width:100%; table-layout:fixed;">
                 <tr>
-                    <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Applied VAT Value <?php if ((float) $d['taxrate'] > 0) { echo '(' . htmlspecialchars($d['taxrate']) . '%)'; } ?></td>
-                    <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;<?php echo $neg_style; ?>"><?php echo $neg_prefix . ib_money_format($display_tax, $config, $d['currency_symbol']); ?></td>
+                    <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700;">
+                        <table class="no-border" style="width:100%; table-layout:fixed;">
+                            <tr>
+                                <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Applied VAT Value <?php if ((float) $d['taxrate'] > 0) { echo '(' . htmlspecialchars($d['taxrate']) . '%)'; } ?></td>
+                                <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;<?php echo $neg_style; ?>"><?php echo $neg_prefix . ib_money_format($display_tax, $config, $d['currency_symbol']); ?></td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
-            </table>
-        </td>
-    </tr>
 
-    <tr>
-        <td style="border:0;"></td>
-        <td style="border:1px solid #aaa; padding:4px 8px; font-size:11px; font-weight:700; background:#f8f8f8;" class="grand-total">
-            <table class="no-border" style="width:100%; table-layout:fixed;">
                 <tr>
-                    <td style="border:0; width:65%; text-align:left; font-size:11px; font-weight:700;">Total Including VAT</td>
-                    <td style="border:0; width:35%; text-align:right; font-size:11px; font-weight:700;<?php echo $neg_style; ?>"><?php echo $neg_prefix . ib_money_format($display_total, $config, $d['currency_symbol']); ?></td>
+                    <td style="border:1px solid #aaa; padding:4px 8px; font-size:11px; font-weight:700; background:#f8f8f8;" class="grand-total">
+                        <table class="no-border" style="width:100%; table-layout:fixed;">
+                            <tr>
+                                <td style="border:0; width:65%; text-align:left; font-size:11px; font-weight:700;">Total Including VAT</td>
+                                <td style="border:0; width:35%; text-align:right; font-size:11px; font-weight:700;<?php echo $neg_style; ?>"><?php echo $neg_prefix . ib_money_format($display_total, $config, $d['currency_symbol']); ?></td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
-            </table>
-        </td>
-    </tr>
 
-    <?php if ($d['credit'] != '0.00') { ?>
-    <tr>
-        <td style="border:0;"></td>
-        <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px;">
-            <table class="no-border" style="width:100%; table-layout:fixed;">
+                <?php if ($d['credit'] != '0.00') { ?>
                 <tr>
-                    <td style="border:0; width:65%; text-align:left; font-size:10px;">Total Paid</td>
-                    <td style="border:0; width:35%; text-align:right; font-size:10px;"><?php echo ib_money_format($d['credit'], $config, $d['currency_symbol']); ?></td>
+                    <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px;">
+                        <table class="no-border" style="width:100%; table-layout:fixed;">
+                            <tr>
+                                <td style="border:0; width:65%; text-align:left; font-size:10px;">Total Paid</td>
+                                <td style="border:0; width:35%; text-align:right; font-size:10px;"><?php echo ib_money_format($d['credit'], $config, $d['currency_symbol']); ?></td>
+                            </tr>
+                        </table>
+                    </td>
                 </tr>
+                <tr>
+                    <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700; background:#fff3f3;">
+                        <table class="no-border" style="width:100%; table-layout:fixed;">
+                            <tr>
+                                <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Amount Due</td>
+                                <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;"><?php echo ib_money_format($i_due, $config, $d['currency_symbol']); ?></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <?php } ?>
             </table>
         </td>
     </tr>
-    <tr>
-        <td style="border:0;"></td>
-        <td style="border:1px solid #aaa; padding:4px 8px; font-size:10px; font-weight:700; background:#fff3f3;">
-            <table class="no-border" style="width:100%; table-layout:fixed;">
-                <tr>
-                    <td style="border:0; width:65%; text-align:left; font-size:10px; font-weight:700;">Amount Due</td>
-                    <td style="border:0; width:35%; text-align:right; font-size:10px; font-weight:700;"><?php echo ib_money_format($i_due, $config, $d['currency_symbol']); ?></td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <?php } ?>
 </table>
 
 <?php if ($trs_c != '') { ?>

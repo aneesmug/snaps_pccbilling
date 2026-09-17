@@ -1286,17 +1286,14 @@
 
             window.applyInvoiceContactModalBuyerTypeRules = function () {
                 var buyerType = $.trim(String($modal.find('#buyer_type').val() || '')).toLowerCase();
-                var selectedCompanyId = $.trim(String($modal.find('#modal_company_id').val() || ''));
                 var hasSelection = buyerType === 'company' || buyerType === 'individual';
                 var isCompany = buyerType === 'company';
                 var isIndividual = buyerType === 'individual';
-                var isNewCompany = isCompany && selectedCompanyId === '__new__';
 
                 $modal.find('.buyer-after-type').css('display', hasSelection ? '' : 'none');
                 $modal.find('.buyer-company-selector-only').css('display', isCompany ? '' : 'none');
-                $modal.find('.buyer-company-create-only').css('display', isNewCompany ? '' : 'none');
+                $modal.find('.buyer-company-only').css('display', isCompany ? '' : 'none');
                 $modal.find('.buyer-individual-only').css('display', isIndividual ? '' : 'none');
-                $modal.find('.buyer-shared-contact-only').css('display', (isIndividual || isNewCompany) ? '' : 'none');
             };
 
             function applyModalBuyerTypeRules() {
@@ -1496,7 +1493,7 @@
                 var _url = $("#_url").val();
                 var buyerType = $.trim(String(modalBody.find('#buyer_type').val() || '')).toLowerCase();
                 var selectedCompanyId = $.trim(String(modalBody.find('#modal_company_id').val() || ''));
-                var isNewCompany = buyerType === 'company' && selectedCompanyId === '__new__';
+                var isCompany = buyerType === 'company';
 
                 var accountName = $.trim(String(modalBody.find('#account').val() || ''));
                 var companyName = $.trim(String(modalBody.find('#company').val() || ''));
@@ -1539,31 +1536,35 @@
                         errors.push('Registered Company is required');
                     }
 
-                    if (isNewCompany) {
-                        if (!companyName) {
-                            errors.push('Company Name is required');
-                        }
-                        if (!phone) {
-                            errors.push('Phone is required');
-                        }
-                        if (!address) {
-                            errors.push('Address is required');
-                        }
-                        if (!city) {
-                            errors.push('City is required');
-                        }
-                        if (!state) {
-                            errors.push('State/Region is required');
-                        }
-                        if (!zip) {
-                            errors.push('ZIP/Postal Code is required');
-                        }
-                        if (!country) {
-                            errors.push('Country is required');
-                        }
-                        if (!buildingNumber) {
-                            errors.push('Building Number is required');
-                        }
+                    if (!companyName) {
+                        errors.push('Company Name is required');
+                    }
+                    if (!phone) {
+                        errors.push('Phone is required');
+                    }
+                    if (!address) {
+                        errors.push('Address is required');
+                    }
+                    if (!city) {
+                        errors.push('City is required');
+                    }
+                    if (!state) {
+                        errors.push('State/Region is required');
+                    }
+                    if (!zip) {
+                        errors.push('ZIP/Postal Code is required');
+                    }
+                    if (!country) {
+                        errors.push('Country is required');
+                    }
+                    if (!buildingNumber) {
+                        errors.push('Building Number is required');
+                    }
+                    if (!/^3\d{13}3$/.test(vatNumber)) {
+                        errors.push('VAT Number must be 15 digits and start/end with 3');
+                    }
+                    if (!/^\d{10}$/.test(crnNumber)) {
+                        errors.push('Unified No. (700#) must be 10 digits');
                     }
                 }
 
@@ -1577,19 +1578,19 @@
 
                 $.post(_url + 'contacts/add-post/', {
                     buyer_type: buyerType,
-                    cid: buyerType === 'company' && !isNewCompany && /^\d+$/.test(selectedCompanyId) ? selectedCompanyId : '',
+                    cid: isCompany ? selectedCompanyId : '',
                     account: buyerType === 'individual' ? accountName : '',
-                    company: buyerType === 'company' && isNewCompany ? companyName : '',
-                    company_url: buyerType === 'company' && isNewCompany ? companyUrl : '',
-                    logo_url: buyerType === 'company' && isNewCompany ? logoUrl : '',
-                    address: buyerType === 'company' && isNewCompany ? address : '',
-                    city: buyerType === 'company' && isNewCompany ? city : '',
-                    state: buyerType === 'company' && isNewCompany ? state : '',
-                    zip: buyerType === 'company' && isNewCompany ? zip : '',
-                    country: buyerType === 'company' && isNewCompany ? country : '',
-                    building_number: buyerType === 'company' && isNewCompany ? buildingNumber : '',
-                    vat_number: buyerType === 'company' && isNewCompany ? vatNumber : '',
-                    crn_number: buyerType === 'company' && isNewCompany ? crnNumber : '',
+                    company: isCompany ? companyName : '',
+                    company_url: isCompany ? companyUrl : '',
+                    logo_url: isCompany ? logoUrl : '',
+                    address: isCompany ? address : '',
+                    city: isCompany ? city : '',
+                    state: isCompany ? state : '',
+                    zip: isCompany ? zip : '',
+                    country: isCompany ? country : '',
+                    building_number: isCompany ? buildingNumber : '',
+                    vat_number: isCompany ? vatNumber : '',
+                    crn_number: isCompany ? crnNumber : '',
                     id_iqama: buyerType === 'individual' ? idIqama : '',
                     phone: phone,
                     email: email

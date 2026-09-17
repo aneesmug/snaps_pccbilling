@@ -24,7 +24,7 @@
                                 <div class="mb-3">
                                     <label for="company_name">{$_L['Company Name']}<small class="red">*</small></label>
 
-                                    <div><input type="text" id="company_name" name="company_name" class="form-control" value="{$val['company_name']}">
+                                    <div><input type="text" id="company_name" name="company_name" class="form-control" value="{$val['company_name']}" required>
 
                                     </div>
 
@@ -39,6 +39,36 @@
 
                                     </div>
 
+
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="building_number">Building Number<small class="red">*</small></label>
+
+                                    <div><input type="text" id="building_number" name="building_number" class="form-control js-digits-only" inputmode="numeric" maxlength="10" placeholder="e.g. 1234" value="{$val['building_number']}" required>
+
+                                    </div>
+
+
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="vat_number">VAT Number<small class="red">*</small></label>
+
+                                    <div><input type="text" id="vat_number" name="vat_number" class="form-control js-digits-only" inputmode="numeric" maxlength="15" placeholder="15 digits, starts and ends with 3" value="{$val['vat_number']}" required>
+
+                                    </div>
+                                    <small class="help-block">Used for company VAT.</small>
+
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="crn_number">Unified No. (700#)<small class="red">*</small></label>
+
+                                    <div><input type="text" id="crn_number" name="crn_number" class="form-control js-digits-only" inputmode="numeric" maxlength="10" placeholder="10 digits" value="{$val['crn_number']}" required>
+
+                                    </div>
+                                    <small class="help-block">Used for company Unified No. (700#).</small>
 
                                 </div>
 
@@ -82,9 +112,9 @@
                                 </div>
 
 
-                                <div class="mb-3"><label for="phone">{$_L['Phone']}</label>
+                                <div class="mb-3"><label for="phone">{$_L['Phone']}<small class="red">*</small></label>
 
-                                    <div><input type="text" id="phone" name="phone" class="form-control" value="{$val['phone']}">
+                                    <div><input type="text" id="phone" name="phone" class="form-control" value="{$val['phone']}" required>
 
                                     </div>
 
@@ -129,40 +159,40 @@
 
                                 </div>
 
-                                <div class="mb-3"><label for="c_address1">{$_L['Address']}</label>
+                                <div class="mb-3"><label for="c_address1">{$_L['Address']}<small class="red">*</small></label>
 
-                                    <input type="text" id="c_address1" name="address1" class="form-control" value="{$val['address1']}">
+                                    <input type="text" id="c_address1" name="address1" class="form-control" value="{$val['address1']}" required>
 
 
                                 </div>
 
-                                <div class="mb-3"><label for="c_city">{$_L['City']}</label>
+                                <div class="mb-3"><label for="c_city">{$_L['City']}<small class="red">*</small></label>
 
-                                    <div><input type="text" id="c_city" name="city" class="form-control" value="{$val['city']}">
+                                    <div><input type="text" id="c_city" name="city" class="form-control" value="{$val['city']}" required>
 
                                     </div>
 
 
                                 </div>
 
-                                <div class="mb-3"><label for="c_state">{$_L['State Region']}</label>
+                                <div class="mb-3"><label for="c_state">{$_L['State Region']}<small class="red">*</small></label>
 
 
-                                    <div><input type="text" id="c_state" name="state" class="form-control" value="{$val['state']}"></div>
-
-
-                                </div>
-
-                                <div class="mb-3"><label for="c_zip">{$_L['ZIP Postal Code']}</label>
-
-                                    <input type="text" id="c_zip" name="zip" class="form-control" value="{$val['zip']}">
+                                    <div><input type="text" id="c_state" name="state" class="form-control" value="{$val['state']}" required></div>
 
 
                                 </div>
 
-                                <div class="mb-3"><label for="c_country">{$_L['Country']}</label>
+                                <div class="mb-3"><label for="c_zip">{$_L['ZIP Postal Code']}<small class="red">*</small></label>
 
-                                    <select name="country" id="c_country" class="form-control country">
+                                    <input type="text" id="c_zip" name="zip" class="form-control" value="{$val['zip']}" required>
+
+
+                                </div>
+
+                                <div class="mb-3"><label for="c_country">{$_L['Country']}<small class="red">*</small></label>
+
+                                    <select name="country" id="c_country" class="form-control country" required>
                                         <option value="">{$_L['Select Country']}</option>
                                         {$countries}
                                     </select>

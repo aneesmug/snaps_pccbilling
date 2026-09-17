@@ -329,7 +329,13 @@ switch ($action) {
                 ->order_by_asc('id')
                 ->find_many();
             $ui->assign('fs', $fs);
-            $ui->assign('countries', Countries::all($d['country']));
+
+            // Prefill ZATCA fields from the linked registered company (falls back to the
+            // contact's own stored values for legacy data saved before companies existed).
+            $linked_company = $d->cid ? db_find_one('sys_companies', $d->cid) : null;
+
+            $ui->assign('linked_company', $linked_company);
+            $ui->assign('countries', Countries::all($linked_company ? $linked_company->country : $d['country']));
             $ui->assign('d', $d);
             $tags = Tags::get_all('Contacts');
             $ui->assign('tags', $tags);
@@ -795,63 +801,7 @@ switch ($action) {
         $building_number = $normalize_digits($building_number);
         $id_iqama = $normalize_digits($id_iqama);
 
-        if ($company_id !== '' && $company_id !== '0' && $company_id !== '__new__') {
-            // Existing registered company selected
-            $company_db = db_find_one('sys_companies', $company_id);
-            if ($company_db) {
-                $company = $company_db->company_name;
-                $cid = $company_id;
-                // Use company's address for the contact if not provided
-                if ($address === '') { $address = $company_db->address1; }
-                if ($city    === '') { $city    = $company_db->city; }
-                if ($state   === '') { $state   = $company_db->state; }
-                if ($zip     === '') { $zip     = $company_db->zip; }
-                if ($country === '') { $country = $company_db->country; }
-            }
-        } elseif ($company_id === '__new__' && _post('company') != '') {
-            // Create new company with ZATCA fields
-            $company = _post('company');
-            $c = new Company();
-
-            $c->company_name = $company;
-            $c->email        = $email;
-            $c->phone        = $phone;
-            $c->url          = _post('company_url', 'http://');
-            $c->logo_url     = _post('logo_url', '');
-
-            $c->address1     = $address;
-            $c->city         = $city;
-            $c->state        = $state;
-            $c->zip          = $zip;
-            $c->country      = $country;
-            $c->aid          = $user->id;
-
-            // ZATCA fields on company
-            if ($vat_number !== '')      { $c->vat_number      = $vat_number; }
-            if ($crn_number !== '')      { $c->crn_number      = $crn_number; }
-            if ($building_number !== '') { $c->building_number = $building_number; }
-
-            $c->save();
-            $cid = $c->id;
-        } elseif (_post('company') != '') {
-            // Fallback: create company without ZATCA (legacy path)
-            $company = _post('company');
-            $c = new Company();
-
-            $c->company_name = $company;
-            $c->email = $email;
-            $c->phone = $phone;
-
-            $c->address1 = $address;
-            $c->city     = $city;
-            $c->state    = $state;
-            $c->zip      = $zip;
-            $c->country  = $country;
-
-            $c->save();
-
-            $cid = $c->id;
-        }
+        $is_new_company = $buyer_type === 'company' && $company_id === '__new__';
 
         if ($currency == '') {
             $currency = '0';
@@ -865,6 +815,58 @@ switch ($action) {
 
         if ($account == '') {
             $msg .= $_L['Account Name is required'] . ' <br>';
+        }
+
+        if ($buyer_type !== 'company' && $buyer_type !== 'individual') {
+            $msg .= 'Buyer Type is required <br>';
+        }
+
+        if ($buyer_type === 'company' && $company_id === '') {
+            $msg .= 'Registered Company is required <br>';
+        }
+
+        if ($buyer_type === 'company') {
+            // Company info (whether picking an existing registered company or creating a
+            // new one) must always be complete — this is what other contacts at the same
+            // company will be linked against.
+            if (_post('company') == '') {
+                $msg .= $_L['Company Name'] . ' is required <br>';
+            }
+            if ($phone == '') {
+                $msg .= $_L['Phone'] . ' is required <br>';
+            }
+            if ($building_number === '') {
+                $msg .= 'Building Number is required <br>';
+            }
+            if ($address == '') {
+                $msg .= $_L['Address'] . ' is required <br>';
+            }
+            if ($city == '') {
+                $msg .= $_L['City'] . ' is required <br>';
+            }
+            if ($state == '') {
+                $msg .= $_L['State Region'] . ' is required <br>';
+            }
+            if ($zip == '') {
+                $msg .= $_L['ZIP Postal Code'] . ' is required <br>';
+            }
+            if ($country == '') {
+                $msg .= $_L['Country'] . ' is required <br>';
+            }
+            if (!preg_match('/^3\d{13}3$/', $vat_number)) {
+                $msg .= 'VAT Number must be 15 digits and start/end with 3 <br>';
+            }
+            if (!preg_match('/^\d{10}$/', $crn_number)) {
+                $msg .= 'Unified No. (700#) must be 10 digits <br>';
+            }
+        }
+
+        if ($buyer_type === 'individual' && $phone == '') {
+            $msg .= $_L['Phone'] . ' is required <br>';
+        }
+
+        if ($id_iqama !== '' && !preg_match('/^\d{10}$/', $id_iqama)) {
+            $msg .= 'ID / Iqama must be 10 digits <br>';
         }
 
         if ($email != '') {
@@ -930,6 +932,75 @@ switch ($action) {
 
         if ($msg == '') {
             Tags::save($tags, 'Contacts');
+
+            // Resolve registered company (existing selection or create new with ZATCA fields)
+            // Only when buyer_type is company — an individual contact must not stay linked to
+            // a company left over from a stale hidden field value.
+            if ($buyer_type === 'company' && $company_id !== '' && $company_id !== '0' && $company_id !== '__new__') {
+                $company_db = db_find_one('sys_companies', $company_id);
+                if ($company_db) {
+                    // Company info is required whenever buyer_type is company, so keep the
+                    // registered company's record fully in sync with what was submitted here.
+                    $company_db->company_name    = _post('company');
+                    $company_db->phone           = $phone;
+                    if ($email !== '') { $company_db->email = $email; }
+                    $company_db->url             = _post('company_url', $company_db->url);
+                    $company_db->logo_url        = _post('logo_url', $company_db->logo_url);
+                    $company_db->address1        = $address;
+                    $company_db->city            = $city;
+                    $company_db->state           = $state;
+                    $company_db->zip             = $zip;
+                    $company_db->country          = $country;
+                    $company_db->vat_number      = $vat_number;
+                    $company_db->crn_number      = $crn_number;
+                    $company_db->building_number = $building_number;
+                    $company_db->save();
+
+                    $company = $company_db->company_name;
+                    $cid = $company_id;
+                }
+            } elseif ($is_new_company) {
+                $company = _post('company');
+                $c = new Company();
+
+                $c->company_name = $company;
+                $c->email        = $email;
+                $c->phone        = $phone;
+                $c->url          = _post('company_url', 'http://');
+                $c->logo_url     = _post('logo_url', '');
+
+                $c->address1     = $address;
+                $c->city         = $city;
+                $c->state        = $state;
+                $c->zip          = $zip;
+                $c->country      = $country;
+                $c->aid          = $user->id;
+
+                $c->vat_number      = $vat_number;
+                $c->crn_number      = $crn_number;
+                $c->building_number = $building_number;
+
+                $c->save();
+                $cid = $c->id;
+            } elseif ($buyer_type !== 'individual' && _post('company') != '') {
+                // Fallback: create company without ZATCA (legacy path)
+                $company = _post('company');
+                $c = new Company();
+
+                $c->company_name = $company;
+                $c->email = $email;
+                $c->phone = $phone;
+
+                $c->address1 = $address;
+                $c->city     = $city;
+                $c->state    = $state;
+                $c->zip      = $zip;
+                $c->country  = $country;
+
+                $c->save();
+
+                $cid = $c->id;
+            }
 
             $data = [];
 
@@ -1254,21 +1325,18 @@ switch ($action) {
             $old_account = $d->account;
 
             $account = _post('account');
-            // $company = _post('company');
 
-            $company_id = _post('company_id');
+            $buyer_type = _post('buyer_type'); // 'company' or 'individual'
+
+            // For company buyer_type, derive account name from company name
+            if ($buyer_type === 'company' && $account === '') {
+                $account = _post('company');
+            }
+
+            $company_id = _post('company_id'); // existing company id or '__new__'
 
             $company = '';
             $cid = 0;
-
-            if ($company_id != '' || $company_id != '0') {
-                $company_db = db_find_one('sys_companies', $company_id);
-
-                if ($company_db) {
-                    $company = $company_db->company_name;
-                    $cid = $company_id;
-                }
-            }
 
             $email = _post('edit_email');
 
@@ -1285,7 +1353,6 @@ switch ($action) {
             $city = _post('city');
             $state = _post('state');
             $zip = _post('zip');
-            $building_number = _post('building_number');
             $country = _post('country');
 
             $username = _post('username');
@@ -1300,10 +1367,88 @@ switch ($action) {
                 $type = 'Customer';
             }
 
+            // ZATCA identity fields
+            $vat_number  = _post('vat_number');   // saved on company
+            $crn_number  = _post('crn_number');   // saved on company (Unified 700#)
+            $building_number = _post('building_number'); // saved on company
+            $id_iqama    = _post('id_iqama');     // individual only → entity_number
+
+            $normalize_digits = static function ($value) {
+                $value = (string) $value;
+
+                $arabic_indic = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+                $eastern_arabic = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+                $latin_digits = ['0','1','2','3','4','5','6','7','8','9'];
+
+                $value = str_replace($arabic_indic, $latin_digits, $value);
+                $value = str_replace($eastern_arabic, $latin_digits, $value);
+
+                return preg_replace('/\D+/', '', $value);
+            };
+
+            $vat_number = $normalize_digits($vat_number);
+            $crn_number = $normalize_digits($crn_number);
+            $building_number = $normalize_digits($building_number);
+            $id_iqama = $normalize_digits($id_iqama);
+
+            $is_new_company = $buyer_type === 'company' && $company_id === '__new__';
+
             $msg = '';
+
+            if ($buyer_type !== 'company' && $buyer_type !== 'individual') {
+                $msg .= 'Buyer Type is required <br>';
+            }
 
             if ($account == '') {
                 $msg .= $_L['Account Name is required'] . ' <br>';
+            }
+
+            if ($buyer_type === 'company' && $company_id === '') {
+                $msg .= 'Registered Company is required <br>';
+            }
+
+            if ($buyer_type === 'company') {
+                // Company info (whether picking an existing registered company or creating a
+                // new one) must always be complete — this is what other contacts at the same
+                // company will be linked against.
+                if (_post('company') == '') {
+                    $msg .= $_L['Company Name'] . ' is required <br>';
+                }
+                if ($phone == '') {
+                    $msg .= $_L['Phone'] . ' is required <br>';
+                }
+                if ($building_number === '') {
+                    $msg .= 'Building Number is required <br>';
+                }
+                if ($address == '') {
+                    $msg .= $_L['Address'] . ' is required <br>';
+                }
+                if ($city == '') {
+                    $msg .= $_L['City'] . ' is required <br>';
+                }
+                if ($state == '') {
+                    $msg .= $_L['State Region'] . ' is required <br>';
+                }
+                if ($zip == '') {
+                    $msg .= $_L['ZIP Postal Code'] . ' is required <br>';
+                }
+                if ($country == '') {
+                    $msg .= $_L['Country'] . ' is required <br>';
+                }
+                if (!preg_match('/^3\d{13}3$/', $vat_number)) {
+                    $msg .= 'VAT Number must be 15 digits and start/end with 3 <br>';
+                }
+                if (!preg_match('/^\d{10}$/', $crn_number)) {
+                    $msg .= 'Unified No. (700#) must be 10 digits <br>';
+                }
+            }
+
+            if ($buyer_type === 'individual' && $phone == '') {
+                $msg .= $_L['Phone'] . ' is required <br>';
+            }
+
+            if ($id_iqama !== '' && !preg_match('/^\d{10}$/', $id_iqama)) {
+                $msg .= 'ID / Iqama must be 10 digits <br>';
             }
             //            if($tags != ''){
             //                $pieces = explode(',', $tags);
@@ -1389,20 +1534,85 @@ switch ($action) {
                     ->where('id',$id)
                     ->first();
 
+                // Resolve registered company (existing selection or create new with ZATCA fields)
+                // Only when buyer_type is company — an individual contact must not stay linked to
+                // a company left over from a stale hidden field value.
+                if ($buyer_type === 'company' && $company_id !== '' && $company_id !== '0' && $company_id !== '__new__') {
+                    $company_db = db_find_one('sys_companies', $company_id);
+                    if ($company_db) {
+                        // Company info is required whenever buyer_type is company, so keep the
+                        // registered company's record fully in sync with what was submitted here.
+                        $company_db->company_name    = _post('company');
+                        $company_db->phone           = $phone;
+                        if ($email !== '') { $company_db->email = $email; }
+                        $company_db->url             = _post('company_url', $company_db->url);
+                        $company_db->logo_url        = _post('logo_url', $company_db->logo_url);
+                        $company_db->address1        = $address;
+                        $company_db->city            = $city;
+                        $company_db->state           = $state;
+                        $company_db->zip             = $zip;
+                        $company_db->country          = $country;
+                        $company_db->vat_number      = $vat_number;
+                        $company_db->crn_number      = $crn_number;
+                        $company_db->building_number = $building_number;
+                        $company_db->save();
+
+                        $company = $company_db->company_name;
+                        $cid = $company_id;
+                    }
+                } elseif ($is_new_company) {
+                    $company = _post('company');
+                    $c = new Company();
+
+                    $c->company_name = $company;
+                    $c->email        = $email;
+                    $c->phone        = $phone;
+                    $c->url          = _post('company_url', 'http://');
+                    $c->logo_url     = _post('logo_url', '');
+
+                    $c->address1     = $address;
+                    $c->city         = $city;
+                    $c->state        = $state;
+                    $c->zip          = $zip;
+                    $c->country      = $country;
+                    $c->aid          = $user->id;
+
+                    $c->vat_number      = $vat_number;
+                    $c->crn_number      = $crn_number;
+                    $c->building_number = $building_number;
+
+                    $c->save();
+                    $cid = $c->id;
+                    $company_id = $cid;
+                }
+
+                if ($buyer_type === 'company' && $account === '' && $company !== '') {
+                    $account = $company;
+                }
+
                 $d->account = $account;
                 $d->company = $company;
-                $d->cid = $company_id;
+                $d->cid = $cid;
                 $d->o = $owner_id;
 
                 $d->email = $email;
                 $d->tags = Arr::arr_to_str($tags);
-                $d->phone = $phone;
-                $d->address = $address;
-                $d->city = $city;
-                $d->zip = $zip;
-                $d->state = $state;
-                $d->building_number = $building_number;
-                $d->country = $country;
+                if ($phone !== '') { $d->phone = $phone; }
+                if ($address !== '') { $d->address = $address; }
+                if ($city !== '') { $d->city = $city; }
+                if ($zip !== '') { $d->zip = $zip; }
+                if ($state !== '') { $d->state = $state; }
+                if ($building_number !== '') { $d->building_number = $building_number; }
+                if ($country !== '') { $d->country = $country; }
+
+                // ZATCA buyer identity fields
+                $d->buyer_type = $buyer_type;
+                if ($buyer_type === 'company') {
+                    if ($vat_number !== '') { $d->tax_number = $vat_number; }
+                    if ($crn_number !== '') { $d->entity_number = $crn_number; }
+                } elseif ($buyer_type === 'individual') {
+                    $d->entity_number = $id_iqama;
+                }
 
                 $d->type = $type;
 
@@ -2087,6 +2297,9 @@ $country
             $val['zip'] = $company->zip;
             $val['state'] = $company->state;
             $val['country'] = $company->country;
+            $val['vat_number'] = $company->vat_number;
+            $val['crn_number'] = $company->crn_number;
+            $val['building_number'] = $company->building_number;
 
             $countries = Countries::all($company->country);
 
@@ -2107,6 +2320,9 @@ $country
             $val['zip'] = '';
             $val['state'] = '';
             $val['country'] = '';
+            $val['vat_number'] = '';
+            $val['crn_number'] = '';
+            $val['building_number'] = '';
             //  $val[''] = '';
 
             $countries = Countries::all($config['country']);
@@ -2182,6 +2398,51 @@ $country
             $data['url'] = '';
         }
 
+        $normalize_digits = static function ($value) {
+            $value = (string) $value;
+
+            $arabic_indic = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+            $eastern_arabic = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+            $latin_digits = ['0','1','2','3','4','5','6','7','8','9'];
+
+            $value = str_replace($arabic_indic, $latin_digits, $value);
+            $value = str_replace($eastern_arabic, $latin_digits, $value);
+
+            return preg_replace('/\D+/', '', $value);
+        };
+
+        $vat_number = $normalize_digits($data['vat_number'] ?? '');
+        $crn_number = $normalize_digits($data['crn_number'] ?? '');
+        $building_number = $normalize_digits($data['building_number'] ?? '');
+
+        if (($data['phone'] ?? '') == '') {
+            i_close($_L['Phone'] . ' is required');
+        }
+        if (($data['address1'] ?? '') == '') {
+            i_close($_L['Address'] . ' is required');
+        }
+        if (($data['city'] ?? '') == '') {
+            i_close($_L['City'] . ' is required');
+        }
+        if (($data['state'] ?? '') == '') {
+            i_close($_L['State Region'] . ' is required');
+        }
+        if (($data['zip'] ?? '') == '') {
+            i_close($_L['ZIP Postal Code'] . ' is required');
+        }
+        if (($data['country'] ?? '') == '') {
+            i_close($_L['Country'] . ' is required');
+        }
+        if ($building_number === '') {
+            i_close('Building Number is required');
+        }
+        if (!preg_match('/^3\d{13}3$/', $vat_number)) {
+            i_close('VAT Number must be 15 digits and start/end with 3');
+        }
+        if (!preg_match('/^\d{10}$/', $crn_number)) {
+            i_close('Unified No. (700#) must be 10 digits');
+        }
+
         $company->company_name = $data['company_name'];
 
         $company->code = $code;
@@ -2199,6 +2460,10 @@ $country
         $company->state = $data['state'];
         $company->zip = $data['zip'];
         $company->country = $data['country'];
+
+        $company->vat_number = $vat_number;
+        $company->crn_number = $crn_number;
+        $company->building_number = $building_number;
 
         $company->aid = $user->id;
 

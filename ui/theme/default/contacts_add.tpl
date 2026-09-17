@@ -35,7 +35,7 @@
                                         <div class="mb-3 row">
                                             <label for="buyer_type" class="col-sm-3"><span class="h6">Buyer Type</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <select id="buyer_type" name="buyer_type" class="form-control">
+                                                <select id="buyer_type" name="buyer_type" class="form-control" required>
                                                     <option value="" selected>--Select Buyer Type--</option>
                                                     <option value="company">Company</option>
                                                     <option value="individual">Individual</option>
@@ -46,7 +46,7 @@
                                         <div class="mb-3 row buyer-after-type buyer-individual-only" style="display:none;">
                                             <label for="account" class="col-sm-3"><span class="h6">{$_L['Full Name']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <input type="text" id="account" name="account" class="form-control" autofocus>
+                                                <input type="text" id="account" name="account" class="form-control" autofocus required>
                                             </div>
                                         </div>
 
@@ -67,7 +67,7 @@
                                         <div class="mb-3 row buyer-after-type buyer-company-selector-only" style="display:none;">
                                             <label for="cid" class="col-sm-3"><span class="h6">Registered Company</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <select id="cid" name="cid" class="form-control">
+                                                <select id="cid" name="cid" class="form-control" required>
                                                     <option value="">--Select Registered Company--</option>
                                                     {foreach $companies as $company}
                                                         <option value="{$company['id']}" {if $c_selected_id eq ($company['id'])}selected{/if}>
@@ -80,45 +80,45 @@
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
                                             <label for="company" class="col-sm-3"><span class="h6">{$_L['Company Name']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <input type="text" id="company" name="company" class="form-control">
+                                                <input type="text" id="company" name="company" class="form-control" required>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
                                             <label for="company_url" class="col-sm-3"><span class="h6">{$_L['URL']}</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" id="company_url" name="company_url" class="form-control" placeholder="http://">
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
                                             <label for="logo_url" class="col-sm-3"><span class="h6">{$_L['Logo URL']}</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" id="logo_url" name="logo_url" class="form-control">
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
                                             <label for="building_number" class="col-sm-3"><span class="h6">Building Number</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <input type="text" id="building_number" name="building_number" class="form-control" inputmode="numeric" maxlength="10" placeholder="e.g. 1234">
+                                                <input type="text" id="building_number" name="building_number" class="form-control" inputmode="numeric" maxlength="10" placeholder="e.g. 1234" required>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
                                             <label for="vat_number" class="col-sm-3"><span class="h6">VAT Number</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <input type="text" id="vat_number" name="vat_number" class="form-control" maxlength="15" placeholder="15 digits, starts and ends with 3">
+                                                <input type="text" id="vat_number" name="vat_number" class="form-control" maxlength="15" placeholder="15 digits, starts and ends with 3" required>
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
                                             <label for="crn_number" class="col-sm-3"><span class="h6">Unified No. (700#)</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
-                                                <input type="text" id="crn_number" name="crn_number" class="form-control" maxlength="10" placeholder="10 digits">
+                                                <input type="text" id="crn_number" name="crn_number" class="form-control" maxlength="10" placeholder="10 digits" required>
                                             </div>
                                         </div>
 
@@ -177,51 +177,51 @@
 
 
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
-                                            <label for="address" class="col-sm-3"><span class="h6">{$_L['Address']}</span> </label>
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
+                                            <label for="address" class="col-sm-3"><span class="h6">{$_L['Address']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
 
-                                                <input type="text" id="address" name="address" class="form-control">
+                                                <input type="text" id="address" name="address" class="form-control" required>
 
 
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
-                                            <label for="city" class="col-sm-3"><span class="h6">{$_L['City']}</span> </label>
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
+                                            <label for="city" class="col-sm-3"><span class="h6">{$_L['City']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
 
-                                                <input type="text" id="city" name="city" class="form-control">
+                                                <input type="text" id="city" name="city" class="form-control" required>
 
 
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
-                                            <label for="state" class="col-sm-3"><span class="h6">{$_L['State Region']}</span> </label>
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
+                                            <label for="state" class="col-sm-3"><span class="h6">{$_L['State Region']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
 
-                                                <input type="text" id="state" name="state" class="form-control">
+                                                <input type="text" id="state" name="state" class="form-control" required>
 
 
                                             </div>
                                         </div>
 
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
-                                            <label for="zip" class="col-sm-3"><span class="h6">{$_L['ZIP Postal Code']}</span> </label>
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
+                                            <label for="zip" class="col-sm-3"><span class="h6">{$_L['ZIP Postal Code']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
 
-                                                <input type="text" id="zip" name="zip" class="form-control">
+                                                <input type="text" id="zip" name="zip" class="form-control" required>
                                             </div>
                                         </div>
 
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-create-only" style="display:none;">
-                                            <label for="country" class="col-sm-3"><span class="h6">{$_L['Country']}</span> </label>
+                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
+                                            <label for="country" class="col-sm-3"><span class="h6">{$_L['Country']}</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
 
-                                                <select name="country" id="country" class="form-control">
+                                                <select name="country" id="country" class="form-control" required>
                                                     <option value=""><span></span>{$_L['Select Country']}</option>
                                                     {$countries}
                                                 </select>
@@ -303,7 +303,7 @@
                                     </div>
                                     <div class="col-md-6 col-sm-12">
 
-                                        <div class="mb-3 row buyer-after-type buyer-shared-contact-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type" style="display:none;">
                                             <label for="email" class="col-sm-3"><span class="h6">{$_L['Email']}</span> </label>
                                             <div class="col-sm-9">
 
@@ -312,7 +312,7 @@
 
                                             </div>
                                         </div>
-                                        <div class="mb-3 row buyer-after-type buyer-shared-contact-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type" style="display:none;">
                                             <label for="secondary_email" class="col-sm-3"><span class="h6">{$_L['Secondary Email']}</span> </label>
                                             <div class="col-sm-9">
 
@@ -321,11 +321,11 @@
 
                                             </div>
                                         </div>
-                                        <div class="mb-3 row buyer-after-type buyer-shared-contact-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type" style="display:none;">
                                             <label for="phone" class="col-sm-3"><span class="h6">{$_L['Phone']}</span><span class="text-danger">*</span> </label>
                                             <div class="col-sm-9">
 
-                                                <input type="text" id="phone" name="phone" class="form-control">
+                                                <input type="text" id="phone" name="phone" class="form-control" required>
 
 
                                             </div>
@@ -474,17 +474,14 @@
 
             function applyBuyerTypeRules() {
                 var buyerType = $.trim(String($buyerType.val() || '')).toLowerCase();
-                var selectedCompanyId = $.trim(String($cid.val() || ''));
                 var hasSelection = buyerType === 'company' || buyerType === 'individual';
                 var isCompany = buyerType === 'company';
                 var isIndividual = buyerType === 'individual';
-                var isNewCompany = isCompany && selectedCompanyId === '__new__';
 
                 $('.buyer-after-type').toggle(hasSelection);
                 $('.buyer-company-selector-only').toggle(isCompany);
-                $('.buyer-company-create-only').toggle(isNewCompany);
+                $('.buyer-company-only').toggle(isCompany);
                 $('.buyer-individual-only').toggle(isIndividual);
-                $('.buyer-shared-contact-only').toggle(isIndividual || isNewCompany);
             }
 
             $buyerType.on('change', function () {
@@ -493,6 +490,7 @@
 
             $cid.on('change', function () {
                 applyBuyerTypeRules();
+                getBusinessDetails();
             });
 
             applyBuyerTypeRules();
@@ -527,9 +525,6 @@
 
 
 
-            {if $config['show_business_number'] eq '1'}
-
-
             var $business_number = $("#business_number");
 
             var $address = $("#address");
@@ -540,18 +535,27 @@
 
             var $zip = $("#zip");
 
+            var $companyName = $("#company");
 
+            var $companyUrl = $("#company_url");
+
+            var $logoUrl = $("#logo_url");
+
+            var $vatNumber = $("#vat_number");
+
+            var $crnNumber = $("#crn_number");
+
+            var $buildingNumber = $("#building_number");
 
             function getBusinessDetails() {
 
-                if(!/^\d+$/.test(String($cid.val() || '')) || $cid.val() === '0'){
-                   // $business_number.val('');
+                var selectedCompanyId = $.trim(String($cid.val() || ''));
+
+                if (!/^\d+$/.test(selectedCompanyId) || selectedCompanyId === '0') {
                     return;
                 }
 
-                $.getJSON( base_url + "contacts/get_company_details/" +  $cid.val(), function( data ) {
-
-                    console.log(data);
+                $.getJSON( base_url + "contacts/get_company_details/" +  selectedCompanyId, function( data ) {
 
                     if(data.success === false){
 
@@ -559,6 +563,18 @@
                     else{
 
                         $business_number.val(data.business_number);
+
+                        $companyName.val(data.company_name);
+
+                        $companyUrl.val(data.url);
+
+                        $logoUrl.val(data.logo_url);
+
+                        $vatNumber.val(data.vat_number);
+
+                        $crnNumber.val(data.crn_number);
+
+                        $buildingNumber.val(data.building_number);
 
                         $address.val(data.address1);
 
@@ -576,17 +592,6 @@
             }
 
             getBusinessDetails();
-
-
-            $cid.change(function () {
-
-                getBusinessDetails();
-
-
-            });
-
-
-            {/if}
 
 
             $("#add_new_group").click(function(e){

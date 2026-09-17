@@ -24,11 +24,14 @@
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="<?php echo APP_URL.'/'; ?>application/storage/icon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
 
         * { margin: 0; padding: 0; }
         body {
-            font: 14px/1.4 Helvetica, Arial, sans-serif;
+            font: 14px/1.4 'Cairo', Helvetica, Arial, sans-serif;
         }
         #page-wrap { width: 800px; margin: 0 auto; }
 
@@ -543,45 +546,33 @@ $is_cancelled_invoice = isset($d['status']) && strcasecmp((string) $d['status'],
     </div>
 
     <div style="border: 1px solid #ddd; border-radius: 0; background: #fff; padding: 12px 12px 8px; margin-bottom: 20px;">
-        <table width="100%" style="border: 0; margin-bottom: 18px;">
+        <table width="100%" style="border: 0; margin-bottom: 12px;">
             <tr>
-                <td style="border: 0; width: 22%; text-align: center; vertical-align: top;">
-                    <img id="image" src="<?php echo $logo_src; ?>" alt="logo" style="max-width: 170px; max-height: 100px; margin-bottom: 8px;" /><br/>
-                    <?php if ($show_zatca_qr) { ?>
-                        <div style="border: 1px solid #aaa; padding: 3px; display: inline-block; border-radius: 0;">
-                            <img src="<?=$qr_code?>" style="width: 170px; height: auto; aspect-ratio: 1 / 1; object-fit: contain; max-width: 100%;" />
-                        </div>
-                    <?php } else { ?>
-                        <div style="border: 1px dashed #aaa; padding: 10px; display: inline-block; border-radius: 0; color: #999; font-size: 10px;">QR code is disabled in settings.</div>
-                    <?php } ?>
+                <td style="border: 0; width: 45%; text-align: left; vertical-align: middle;">
+                    <img id="image" src="<?php echo $logo_src; ?>" alt="logo" style="width: 230px; max-height: 130px;" />
                 </td>
-                <td style="border: 0; width: 78%; vertical-align: top; padding-left: 12px;">
-                    <!-- Company name top-right -->
-                    <table width="100%" style="border: 0; margin-bottom: 10px;">
-                        <tr>
-                            <td style="border: 0; text-align: right; vertical-align: top;">
-                                <div style="font-size: 18px; font-weight: 700; color: #222;"><?php echo htmlspecialchars($_c['CompanyName']); ?></div>
-                                <div style="font-size: 10px; line-height: 1.4; margin-top: 3px; margin-bottom: 8px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars(trim(preg_replace('/\s+/', ' ', strip_tags($_c['caddress'])))); ?></div>
-                            </td>
-                        </tr>
-                    </table>
-                    <!-- Invoice type + Ref/Date below company -->
-                    <div style="border: 1px solid #aaa; padding: 5px 8px; border-radius: 0; text-align: right; margin-top: 40px; margin-bottom: 3px;">
-                        <div style="font-size: 13px; font-weight: 700; color: #333;"><?php echo $invoice_type_label === 'Standard Tax Invoice' ? 'فاتورة ضريبية' : 'فاتورة ضريبية مبسطة'; ?></div>
-                        <div style="font-size: 9px; margin-top: 2px; color: #666;"><?php echo $invoice_type_label; ?></div>
-                    </div>
-                    <table width="100%" style="border-collapse: collapse; border: 1px solid #aaa;">
-                        <tr>
-                            <td style="border: 0; border-right: 1px solid #aaa; width: 50%; padding: 3px 6px; vertical-align: top;">
-                                <div style="font-size: 7px; color: #666; margin-bottom: 2px;">Invoice Reference Number</div>
-                                <div style="font-size: 10px; font-weight: 700; color: #333;"><?php echo htmlspecialchars(isset($zatca_data['invoice_number']) ? $zatca_data['invoice_number'] : ($d['invoicenum'] . $dispid)); ?></div>
-                            </td>
-                            <td style="border: 0; width: 50%; padding: 3px 6px; vertical-align: top;">
-                                <div style="font-size: 7px; color: #666; margin-bottom: 2px;">Date and Time of Invoice Issuance</div>
-                                <div style="font-size: 10px; font-weight: 700; color: #333;"><?php echo date('Y/m/d H:i:s', strtotime($issue_timestamp)); ?></div>
-                            </td>
-                        </tr>
-                    </table>
+                <td style="border: 0; width: 55%; text-align: right; vertical-align: middle;">
+                    <div style="font-size: 26px; font-weight: 700; color: #222;"><?php echo htmlspecialchars($_c['CompanyName']); ?></div>
+                    <div style="font-size: 10px; line-height: 1.5; margin-top: 4px; color: #555;"><?php echo htmlspecialchars(trim(preg_replace('/\s+/', ' ', strip_tags($_c['caddress'])))); ?></div>
+                </td>
+            </tr>
+        </table>
+
+        <div style="border-top: 2px solid #333; margin-bottom: 10px;"></div>
+
+        <table width="100%" style="border-collapse: collapse; border: 1px solid #aaa; margin-bottom: 4px;">
+            <tr>
+                <td style="border: 0; border-right: 1px solid #aaa; width: 34%; padding: 6px 10px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 13px; font-weight: 700; color: #333;"><?php echo $invoice_type_label === 'Standard Tax Invoice' ? 'فاتورة ضريبية' : 'فاتورة ضريبية مبسطة'; ?></div>
+                    <div style="font-size: 9px; margin-top: 2px; color: #666;"><?php echo $invoice_type_label; ?></div>
+                </td>
+                <td style="border: 0; border-right: 1px solid #aaa; width: 33%; padding: 6px 10px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 7px; color: #666; margin-bottom: 3px;">Invoice Reference Number</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #333;"><?php echo htmlspecialchars(isset($zatca_data['invoice_number']) ? $zatca_data['invoice_number'] : ($d['invoicenum'] . $dispid)); ?></div>
+                </td>
+                <td style="border: 0; width: 33%; padding: 6px 10px; text-align: center; vertical-align: middle;">
+                    <div style="font-size: 7px; color: #666; margin-bottom: 3px;">Date and Time of Invoice Issuance</div>
+                    <div style="font-size: 11px; font-weight: 700; color: #333;"><?php echo date('Y/m/d H:i:s', strtotime($issue_timestamp)); ?></div>
                 </td>
             </tr>
         </table>
@@ -646,28 +637,40 @@ $is_cancelled_invoice = isset($d['status']) && strcasecmp((string) $d['status'],
 
         <table width="100%" style="border: 0; margin-bottom: 6px;">
             <tr>
-                <td style="border: 0; width: 55%;"></td>
-                <td style="border: 1px solid #aaa; padding: 4px 8px; font-size: 10px; font-weight: 700; color: #333; width: 45%;">
-                    <span style="float: right;<?php if ($is_cancelled_invoice) { echo ' color:#c0392b;font-weight:700;'; } ?>"><?php if ($is_cancelled_invoice) { echo '- '; } ?><?php echo ib_money_format($display_subtotal,$config,$d['currency_symbol']); ?></span>
-                    <span>Total Excluding VAT</span>
-                </td>
-            </tr>
-            <tr>
-                <td style="border: 0;"></td>
-                <td style="border: 1px solid #aaa; padding: 4px 8px; font-size: 10px; font-weight: 700; color: #333; width: 45%;">
-                    <span style="float: right;<?php if ($is_cancelled_invoice) { echo ' color:#c0392b;font-weight:700;'; } ?>"><?php if ($is_cancelled_invoice) { echo '- '; } ?><?php echo ib_money_format($display_tax,$config,$d['currency_symbol']); ?></span>
-                    <?php if ($invoice_taxrate_display > 0) { ?>
-                        <span>VAT Total (<?php echo htmlspecialchars(number_format($invoice_taxrate_display, 2)); ?>%)</span>
+                <td style="border: 0; width: 55%; vertical-align: top; padding-top: 2px;">
+                    <?php if ($show_zatca_qr) { ?>
+                        <div style="border: 1px solid #aaa; padding: 3px; display: inline-block; border-radius: 0;">
+                            <img src="<?=$qr_code?>" style="width: 190px; height: auto; aspect-ratio: 1 / 1; object-fit: contain; max-width: 100%;" />
+                        </div>
                     <?php } else { ?>
-                        <span>VAT Total</span>
+                        <div style="border: 1px dashed #aaa; padding: 10px; display: inline-block; border-radius: 0; color: #999; font-size: 10px;">QR code is disabled in settings.</div>
                     <?php } ?>
                 </td>
-            </tr>
-            <tr>
-                <td style="border: 0;"></td>
-                <td style="border: 1px solid #aaa; padding: 4px 8px; font-size: 11px; font-weight: 700; color: #333; width: 45%; background: #f8f8f8;">
-                    <span style="float: right;<?php if ($is_cancelled_invoice) { echo ' color:#c0392b;font-weight:700;'; } ?>"><?php if ($is_cancelled_invoice) { echo '- '; } ?><?php echo ib_money_format($display_total,$config,$d['currency_symbol']); ?></span>
-                    <span>Total Including VAT</span>
+                <td style="border: 0; width: 45%; vertical-align: top; padding: 0;">
+                    <table width="100%" style="border: 0; border-collapse: collapse;">
+                        <tr>
+                            <td style="border: 1px solid #aaa; padding: 4px 8px; font-size: 10px; font-weight: 700; color: #333;">
+                                <span style="float: right;<?php if ($is_cancelled_invoice) { echo ' color:#c0392b;font-weight:700;'; } ?>"><?php if ($is_cancelled_invoice) { echo '- '; } ?><?php echo ib_money_format($display_subtotal,$config,$d['currency_symbol']); ?></span>
+                                <span>Total Excluding VAT</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #aaa; padding: 4px 8px; font-size: 10px; font-weight: 700; color: #333;">
+                                <span style="float: right;<?php if ($is_cancelled_invoice) { echo ' color:#c0392b;font-weight:700;'; } ?>"><?php if ($is_cancelled_invoice) { echo '- '; } ?><?php echo ib_money_format($display_tax,$config,$d['currency_symbol']); ?></span>
+                                <?php if ($invoice_taxrate_display > 0) { ?>
+                                    <span>VAT Total (<?php echo htmlspecialchars(number_format($invoice_taxrate_display, 2)); ?>%)</span>
+                                <?php } else { ?>
+                                    <span>VAT Total</span>
+                                <?php } ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border: 1px solid #aaa; padding: 4px 8px; font-size: 11px; font-weight: 700; color: #333; background: #f8f8f8;">
+                                <span style="float: right;<?php if ($is_cancelled_invoice) { echo ' color:#c0392b;font-weight:700;'; } ?>"><?php if ($is_cancelled_invoice) { echo '- '; } ?><?php echo ib_money_format($display_total,$config,$d['currency_symbol']); ?></span>
+                                <span>Total Including VAT</span>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>

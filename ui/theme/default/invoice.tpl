@@ -1792,17 +1792,14 @@
                 }
 
                 var buyerType = $.trim(String($root.find('#buyer_type').val() || '')).toLowerCase();
-                var selectedCompanyId = $.trim(String($root.find('#modal_company_id').val() || ''));
                 var hasSelection = buyerType === 'company' || buyerType === 'individual';
                 var isCompany = buyerType === 'company';
                 var isIndividual = buyerType === 'individual';
-                var isNewCompany = isCompany && selectedCompanyId === '__new__';
 
                 $root.find('.buyer-after-type').css('display', hasSelection ? '' : 'none');
                 $root.find('.buyer-company-selector-only').css('display', isCompany ? '' : 'none');
-                $root.find('.buyer-company-create-only').css('display', isNewCompany ? '' : 'none');
+                $root.find('.buyer-company-only').css('display', isCompany ? '' : 'none');
                 $root.find('.buyer-individual-only').css('display', isIndividual ? '' : 'none');
-                $root.find('.buyer-shared-contact-only').css('display', (isIndividual || isNewCompany) ? '' : 'none');
             }
 
 
@@ -2188,7 +2185,7 @@
 
                 var buyerType = $.trim(String($content.find('#buyer_type').val() || '')).toLowerCase();
                 var selectedCompanyId = $.trim(String($content.find('#modal_company_id').val() || ''));
-                var isNewCompany = buyerType === 'company' && selectedCompanyId === '__new__';
+                var isCompany = buyerType === 'company';
                 function normalizeDigits(value) {
                     return String(value || '')
                         .replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); })
@@ -2198,7 +2195,57 @@
                 var vatNumber = normalizeDigits($.trim(String($content.find('#vat_number').val() || ''))).replace(/\D+/g, '');
                 var crnNumber = normalizeDigits($.trim(String($content.find('#crn_number').val() || ''))).replace(/\D+/g, '');
                 var idIqama = normalizeDigits($.trim(String($content.find('#id_iqama').val() || ''))).replace(/\D+/g, '');
+                var accountName = $.trim(String($content.find('#account').val() || ''));
+                var phone = $.trim(String($content.find('#phone').val() || ''));
                 var errors = [];
+
+                if (buyerType !== 'company' && buyerType !== 'individual') {
+                    errors.push('Buyer Type is required');
+                } else if (buyerType === 'individual') {
+                    if (!accountName) {
+                        errors.push('Full Name is required');
+                    }
+                    if (!phone) {
+                        errors.push('Phone is required');
+                    }
+                    if (idIqama && !/^\d{10}$/.test(idIqama)) {
+                        errors.push('ID / Iqama must be exactly 10 digits');
+                    }
+                } else {
+                    if (!selectedCompanyId) {
+                        errors.push('Registered Company is required');
+                    }
+                    if (!$.trim(String($content.find('#company').val() || ''))) {
+                        errors.push('Company Name is required');
+                    }
+                    if (!phone) {
+                        errors.push('Phone is required');
+                    }
+                    if (!$.trim(String($content.find('#m_address').val() || ''))) {
+                        errors.push('Address is required');
+                    }
+                    if (!$.trim(String($content.find('#city').val() || ''))) {
+                        errors.push('City is required');
+                    }
+                    if (!$.trim(String($content.find('#state').val() || ''))) {
+                        errors.push('State/Region is required');
+                    }
+                    if (!$.trim(String($content.find('#zip').val() || ''))) {
+                        errors.push('ZIP/Postal Code is required');
+                    }
+                    if (!$.trim(String($content.find('#country').val() || ''))) {
+                        errors.push('Country is required');
+                    }
+                    if (!$.trim(String($content.find('#building_number').val() || ''))) {
+                        errors.push('Building Number is required');
+                    }
+                    if (!/^3\d{13}3$/.test(vatNumber)) {
+                        errors.push('VAT Number must be 15 digits and start/end with 3');
+                    }
+                    if (!/^\d{10}$/.test(crnNumber)) {
+                        errors.push('Unified No. (700#) must be 10 digits');
+                    }
+                }
 
                 if (errors.length > 0) {
                     $content.prepend('<div class="alert alert-danger fade in">' + errors.join('<br>') +
