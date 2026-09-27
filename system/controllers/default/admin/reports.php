@@ -113,14 +113,49 @@ if (!function_exists('zatca_bool_flag')) {
     }
 }
 
+if (!function_exists('zatca_is_purchase_payment')) {
+    /**
+     * Purchase payments are stored as Expense transactions; their VAT belongs to the
+     * purchase invoice (tax point = invoice date), so they must not be counted again.
+     */
+    function zatca_is_purchase_payment(array $expense)
+    {
+        return (int) ($expense['purchase_id'] ?? 0) > 0;
+    }
+}
+
+if (!function_exists('zatca_vat_period_purchases')) {
+    /**
+     * Purchase invoices dated within the period (drafts and cancelled excluded).
+     */
+    function zatca_vat_period_purchases($fdate, $tdate)
+    {
+        return ORM::for_table('sys_purchases')
+            ->where_gte('date', $fdate)
+            ->where_lte('date', $tdate)
+            ->where_not_in('status', ['Draft', 'Cancelled'])
+            ->order_by_desc('id')
+            ->find_array();
+    }
+}
+
+if (!function_exists('zatca_purchase_net')) {
+    function zatca_purchase_net(array $purchase)
+    {
+        return round(max(0.0, (float) ($purchase['subtotal'] ?? 0) - (float) ($purchase['discount'] ?? 0)), 2);
+    }
+}
+
 if (!function_exists('zatca_vat_return_summary')) {
     /**
-     * Aggregates invoices/expenses into the ZATCA VAT return declaration boxes
-     * (Standard-rated / zero-rated / exempt sales & purchases, output vs input VAT).
+     * Aggregates invoices, purchases and expenses into the ZATCA VAT return declaration
+     * boxes (standard / zero-rated / exempt sales, domestic purchases, imports paid at
+     * customs, reverse-charge imports, zero-rated and exempt purchases).
      * Returns/Cancelled invoices are netted off output VAT the same way ZATCA expects
-     * a credit note to reduce the original supply's declared value.
+     * a credit note to reduce the original supply's declared value. Reverse-charge VAT
+     * is declared as both output and input VAT.
      */
-    function zatca_vat_return_summary(array $invoices, array $expenses)
+    function zatca_vat_return_summary(array $invoices, array $expenses, array $purchases = [])
     {
         $s = [
             'standard_sales_net' => 0.0,
@@ -132,8 +167,39 @@ if (!function_exists('zatca_vat_return_summary')) {
             'cancelled_vat' => 0.0,
             'standard_purchases_net' => 0.0,
             'standard_purchases_vat' => 0.0,
+            'import_purchases_net' => 0.0,
+            'import_purchases_vat' => 0.0,
+            'reverse_charge_net' => 0.0,
+            'reverse_charge_vat' => 0.0,
             'zero_purchases_net' => 0.0,
+            'exempt_purchases_net' => 0.0,
         ];
+
+        $add_input = static function (array &$s, $treatment, $net, $tax, $reverse_charge_vat) {
+            switch ($treatment) {
+                case 'import':
+                    $s['import_purchases_net'] += $net;
+                    $s['import_purchases_vat'] += $tax;
+                    break;
+                case 'reverse_charge':
+                    $s['reverse_charge_net'] += $net;
+                    $s['reverse_charge_vat'] += $reverse_charge_vat;
+                    break;
+                case 'exempt':
+                    $s['exempt_purchases_net'] += $net;
+                    break;
+                case 'zero':
+                    $s['zero_purchases_net'] += $net;
+                    break;
+                default:
+                    if ($tax > 0) {
+                        $s['standard_purchases_net'] += $net;
+                        $s['standard_purchases_vat'] += $tax;
+                    } else {
+                        $s['zero_purchases_net'] += $net;
+                    }
+            }
+        };
 
         foreach ($invoices as $inv) {
             $is_return = (string) ($inv['type'] ?? '') === 'Credit Note' && (int) ($inv['parent_id'] ?? 0) > 0;
@@ -156,6 +222,10 @@ if (!function_exists('zatca_vat_return_summary')) {
         }
 
         foreach ($expenses as $exp) {
+            if (zatca_is_purchase_payment($exp)) {
+                continue;
+            }
+
             $gross = (float) ($exp['amount'] ?? 0);
             $tax = (float) ($exp['tax'] ?? 0);
             $net = round($gross - $tax, 2);
@@ -163,16 +233,21 @@ if (!function_exists('zatca_vat_return_summary')) {
                 $net = 0.0;
             }
 
-            if ($tax > 0) {
-                $s['standard_purchases_net'] += $net;
-                $s['standard_purchases_vat'] += $tax;
-            } else {
-                $s['zero_purchases_net'] += $net;
-            }
+            $add_input($s, (string) ($exp['vat_treatment'] ?? 'standard'), $net, $tax, (float) ($exp['reverse_charge_vat'] ?? 0));
         }
 
-        $s['total_output_vat'] = round($s['standard_sales_vat'] - $s['returns_vat'] - $s['cancelled_vat'], 2);
-        $s['total_input_vat'] = round($s['standard_purchases_vat'], 2);
+        foreach ($purchases as $purchase) {
+            $add_input(
+                $s,
+                (string) ($purchase['vat_treatment'] ?? 'standard'),
+                zatca_purchase_net($purchase),
+                (float) ($purchase['tax'] ?? 0),
+                (float) ($purchase['reverse_charge_vat'] ?? 0)
+            );
+        }
+
+        $s['total_output_vat'] = round($s['standard_sales_vat'] - $s['returns_vat'] - $s['cancelled_vat'] + $s['reverse_charge_vat'], 2);
+        $s['total_input_vat'] = round($s['standard_purchases_vat'] + $s['import_purchases_vat'] + $s['reverse_charge_vat'], 2);
         $s['net_vat_due'] = round($s['total_output_vat'] - $s['total_input_vat'], 2);
 
         foreach ($s as $k => $v) {
@@ -1565,7 +1640,34 @@ switch ($action) {
             $expenses_query->where('aid', $user->id);
         }
 
-        $expenses = $expenses_query->find_array();
+        $expenses = array_values(array_filter($expenses_query->find_array(), function ($expense) {
+            return !zatca_is_purchase_payment($expense);
+        }));
+
+        $purchases = zatca_vat_period_purchases($fdate, $tdate);
+
+        foreach ($purchases as $purchase) {
+            $purchase_net = zatca_purchase_net($purchase);
+
+            $report_rows[] = [
+                'source' => 'Purchase',
+                'id' => $purchase['id'],
+                'invoice_number' => !empty($purchase['supplier_invoice_number'])
+                    ? (string) $purchase['supplier_invoice_number']
+                    : (string) ($purchase['invoicenum'] ?? '') . (!empty($purchase['cn']) ? (string) $purchase['cn'] : (string) $purchase['id']),
+                'date' => $purchase['date'] ?? '',
+                'customer' => (string) ($purchase['account'] ?? ''),
+                'customer_vat' => (string) ($purchase['supplier_vat_number'] ?? ''),
+                'status' => (string) ($purchase['status'] ?? ''),
+                'subtotal' => $purchase_net,
+                'tax' => (float) ($purchase['tax'] ?? 0),
+                'total' => (float) ($purchase['total'] ?? 0),
+                'zatca_status' => 'N/A',
+                'reporting_status' => 'Not Applicable',
+                'validation_status' => 'Not Applicable',
+                'submitted_at' => $purchase['date'] ?? '',
+            ];
+        }
 
         foreach ($expenses as $expense) {
             $gross = (float) ($expense['amount'] ?? 0);
@@ -1578,10 +1680,12 @@ switch ($action) {
             $report_rows[] = [
                 'source' => 'Expense',
                 'id' => $expense['id'],
-                'invoice_number' => !empty($expense['ref']) ? (string) $expense['ref'] : 'EXP-' . $expense['id'],
+                'invoice_number' => !empty($expense['supplier_invoice_number'])
+                    ? (string) $expense['supplier_invoice_number']
+                    : (!empty($expense['ref']) ? (string) $expense['ref'] : 'EXP-' . $expense['id']),
                 'date' => $expense['date'] ?? '',
                 'customer' => (string) ($expense['payee'] ?? $expense['category'] ?? $expense['account'] ?? ''),
-                'customer_vat' => '',
+                'customer_vat' => (string) ($expense['supplier_vat_number'] ?? ''),
                 'status' => 'N/A',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
@@ -1614,7 +1718,7 @@ switch ($action) {
             $vat_period_invoices_query->where('aid', $user->id);
         }
 
-        $vat_summary = zatca_vat_return_summary($vat_period_invoices_query->find_array(), $expenses);
+        $vat_summary = zatca_vat_return_summary($vat_period_invoices_query->find_array(), $expenses, $purchases);
 
         view('reports_zatca_submit', [
             'fdate' => $fdate,
@@ -1649,9 +1753,13 @@ switch ($action) {
             $vat_expenses_query->where('aid', $user->id);
         }
 
-        $vat_expenses = $vat_expenses_query->find_array();
+        $vat_expenses = array_values(array_filter($vat_expenses_query->find_array(), function ($expense) {
+            return !zatca_is_purchase_payment($expense);
+        }));
 
-        $vs = zatca_vat_return_summary($vat_invoices, $vat_expenses);
+        $vat_purchases = zatca_vat_period_purchases($fdate, $tdate);
+
+        $vs = zatca_vat_return_summary($vat_invoices, $vat_expenses, $vat_purchases);
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 
@@ -1667,11 +1775,15 @@ switch ($action) {
                 ['Less: Sales returns / credit notes', -$vs['returns_net'], -$vs['returns_vat']],
                 ['Less: Cancelled invoices', -$vs['cancelled_net'], -$vs['cancelled_vat']],
                 ['Zero-rated / exempt sales', $vs['zero_exempt_sales_net'], 0],
+                ['Imports subject to reverse charge (self-assessed)', $vs['reverse_charge_net'], $vs['reverse_charge_vat']],
                 ['Total Output VAT', '', $vs['total_output_vat']],
                 ['', '', ''],
                 ['Purchases (Inputs)', 'Amount (Net)', 'VAT'],
-                ['Standard-rated purchases / expenses', $vs['standard_purchases_net'], $vs['standard_purchases_vat']],
-                ['Zero-rated / exempt purchases', $vs['zero_purchases_net'], 0],
+                ['Standard-rated domestic purchases / expenses', $vs['standard_purchases_net'], $vs['standard_purchases_vat']],
+                ['Imports subject to VAT paid at customs', $vs['import_purchases_net'], $vs['import_purchases_vat']],
+                ['Imports subject to reverse charge', $vs['reverse_charge_net'], $vs['reverse_charge_vat']],
+                ['Zero-rated purchases', $vs['zero_purchases_net'], 0],
+                ['Exempt purchases', $vs['exempt_purchases_net'], 0],
                 ['Total Input VAT', '', $vs['total_input_vat']],
                 ['', '', ''],
                 ['Net VAT Due / (Refundable)', '', $vs['net_vat_due']],
@@ -1688,7 +1800,7 @@ switch ($action) {
 
         $detail_sheet = $spreadsheet->createSheet();
         $detail_sheet->setTitle('Invoice & Expense Detail');
-        $detail_header = ['Type', 'ID', 'Reference', 'Date', 'Customer/Payee', 'Status', 'Net', 'VAT', 'Gross'];
+        $detail_header = ['Type', 'ID', 'Reference', 'Date', 'Customer/Payee', 'Status', 'Net', 'VAT', 'Gross', 'VAT Treatment', 'Supplier VAT No.'];
         $detail_sheet->fromArray($detail_header, null, 'A1');
 
         $detail_rows = [];
@@ -1710,6 +1822,28 @@ switch ($action) {
             ];
         }
 
+        $treatment_labels = InputVat::treatments();
+
+        foreach ($vat_purchases as $purchase) {
+            $treatment = (string) ($purchase['vat_treatment'] ?? 'standard');
+
+            $detail_rows[] = [
+                'Purchase',
+                $purchase['id'] ?? '',
+                !empty($purchase['supplier_invoice_number'])
+                    ? (string) $purchase['supplier_invoice_number']
+                    : (string) ($purchase['invoicenum'] ?? '') . (!empty($purchase['cn']) ? (string) $purchase['cn'] : (string) ($purchase['id'] ?? '')),
+                $purchase['date'] ?? '',
+                (string) ($purchase['account'] ?? ''),
+                (string) ($purchase['status'] ?? ''),
+                zatca_purchase_net($purchase),
+                (float) ($purchase['tax'] ?? 0),
+                (float) ($purchase['total'] ?? 0),
+                $treatment_labels[$treatment] ?? $treatment,
+                (string) ($purchase['supplier_vat_number'] ?? ''),
+            ];
+        }
+
         foreach ($vat_expenses as $expense) {
             $gross = (float) ($expense['amount'] ?? 0);
             $tax = (float) ($expense['tax'] ?? 0);
@@ -1717,17 +1851,22 @@ switch ($action) {
             if ($net < 0) {
                 $net = 0.0;
             }
+            $treatment = (string) ($expense['vat_treatment'] ?? 'standard');
 
             $detail_rows[] = [
                 'Expense',
                 $expense['id'] ?? '',
-                !empty($expense['ref']) ? (string) $expense['ref'] : 'EXP-' . $expense['id'],
+                !empty($expense['supplier_invoice_number'])
+                    ? (string) $expense['supplier_invoice_number']
+                    : (!empty($expense['ref']) ? (string) $expense['ref'] : 'EXP-' . $expense['id']),
                 $expense['date'] ?? '',
                 (string) ($expense['payee'] ?? $expense['category'] ?? $expense['account'] ?? ''),
                 'N/A',
                 $net,
                 $tax,
                 $gross,
+                $treatment_labels[$treatment] ?? $treatment,
+                (string) ($expense['supplier_vat_number'] ?? ''),
             ];
         }
 

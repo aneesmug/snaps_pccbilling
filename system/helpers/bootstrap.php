@@ -32,6 +32,11 @@ if (class_exists('Invoice')) {
     Invoice::migrateTableUsingPdo();
 }
 
+// Run table migrations for purchase / expense input VAT fields
+if (class_exists('InputVat')) {
+    InputVat::migrate();
+}
+
 // Run table migrations for License model
 if (class_exists('License')) {
     License::migrateTableUsingPdo();

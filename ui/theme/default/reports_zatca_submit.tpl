@@ -5,7 +5,7 @@
 <div class="row mb-3">
     <div class="col-md-12">
         <h2 class="mb-2">ZATCA Submit Report</h2>
-        <p class="text-muted mb-0">Submitted/registered ZATCA invoices (including Return Invoices and Cancelled invoices, shown as negative amounts) with reporting and validation status, plus paid expenses/bills (utility, electric, etc.) for reference. This is an internal audit export, not a ZATCA upload file — expense rows are not submitted to ZATCA.</p>
+        <p class="text-muted mb-0">Submitted/registered ZATCA invoices (including Return Invoices and Cancelled invoices, shown as negative amounts) with reporting and validation status, plus purchase invoices and expenses/bills (utility, electric, etc.) with their input VAT. This is an internal audit export, not a ZATCA upload file — expense rows are not submitted to ZATCA.</p>
     </div>
 </div>
 
@@ -49,6 +49,7 @@
                         <tr><td>Less: Sales returns / credit notes</td><td class="text-end text-danger">-{$vat_summary['returns_net']|string_format:"%.2f"}</td><td class="text-end text-danger">-{$vat_summary['returns_vat']|string_format:"%.2f"}</td></tr>
                         <tr><td>Less: Cancelled invoices</td><td class="text-end text-danger">-{$vat_summary['cancelled_net']|string_format:"%.2f"}</td><td class="text-end text-danger">-{$vat_summary['cancelled_vat']|string_format:"%.2f"}</td></tr>
                         <tr><td>Zero-rated / exempt sales</td><td class="text-end">{$vat_summary['zero_exempt_sales_net']|string_format:"%.2f"}</td><td class="text-end">0.00</td></tr>
+                        <tr><td>Imports subject to reverse charge (self-assessed)</td><td class="text-end">{$vat_summary['reverse_charge_net']|string_format:"%.2f"}</td><td class="text-end">{$vat_summary['reverse_charge_vat']|string_format:"%.2f"}</td></tr>
                         <tr class="table-light"><td><strong>Total Output VAT</strong></td><td></td><td class="text-end"><strong>{$vat_summary['total_output_vat']|string_format:"%.2f"}</strong></td></tr>
                     </tbody>
                 </table>
@@ -57,8 +58,11 @@
                 <table class="table table-sm table-bordered mb-3 mb-md-0">
                     <thead><tr><th colspan="3">Purchases (Inputs)</th></tr></thead>
                     <tbody>
-                        <tr><td>Standard-rated purchases / expenses</td><td class="text-end">{$vat_summary['standard_purchases_net']|string_format:"%.2f"}</td><td class="text-end">{$vat_summary['standard_purchases_vat']|string_format:"%.2f"}</td></tr>
-                        <tr><td>Zero-rated / exempt purchases</td><td class="text-end">{$vat_summary['zero_purchases_net']|string_format:"%.2f"}</td><td class="text-end">0.00</td></tr>
+                        <tr><td>Standard-rated domestic purchases / expenses</td><td class="text-end">{$vat_summary['standard_purchases_net']|string_format:"%.2f"}</td><td class="text-end">{$vat_summary['standard_purchases_vat']|string_format:"%.2f"}</td></tr>
+                        <tr><td>Imports subject to VAT paid at customs</td><td class="text-end">{$vat_summary['import_purchases_net']|string_format:"%.2f"}</td><td class="text-end">{$vat_summary['import_purchases_vat']|string_format:"%.2f"}</td></tr>
+                        <tr><td>Imports subject to reverse charge</td><td class="text-end">{$vat_summary['reverse_charge_net']|string_format:"%.2f"}</td><td class="text-end">{$vat_summary['reverse_charge_vat']|string_format:"%.2f"}</td></tr>
+                        <tr><td>Zero-rated purchases</td><td class="text-end">{$vat_summary['zero_purchases_net']|string_format:"%.2f"}</td><td class="text-end">0.00</td></tr>
+                        <tr><td>Exempt purchases</td><td class="text-end">{$vat_summary['exempt_purchases_net']|string_format:"%.2f"}</td><td class="text-end">0.00</td></tr>
                         <tr class="table-light"><td><strong>Total Input VAT</strong></td><td></td><td class="text-end"><strong>{$vat_summary['total_input_vat']|string_format:"%.2f"}</strong></td></tr>
                     </tbody>
                 </table>
@@ -113,7 +117,7 @@
                     </tr>
                 {foreachelse}
                     <tr>
-                        <td colspan="14" class="text-center text-muted">No submitted ZATCA invoices or paid expenses found for selected date range.</td>
+                        <td colspan="14" class="text-center text-muted">No submitted ZATCA invoices, purchases or expenses found for selected date range.</td>
                     </tr>
                 {/foreach}
                 </tbody>

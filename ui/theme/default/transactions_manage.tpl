@@ -121,6 +121,12 @@
                                     <input type="hidden" name="payer" id="payer" value="0">
 
                                 </div>
+
+                                {if !$t['purchase_id']}
+                                    {include file="includes/expense-vat-fields.tpl" vat_row=$t}
+                                {else}
+                                    <p class="help-block">Purchase payment: input VAT is taken from the purchase invoice.</p>
+                                {/if}
                             {/if}
 
                             <div class="mb-3">
@@ -326,6 +332,10 @@
 
             var _url = $("#_url").val();
 
+            {if $t['type'] eq 'Expense' && !$t['purchase_id']}
+                {include file="includes/expense-vat.js"}
+            {/if}
+
             $("#submit").click(function (e) {
                 e.preventDefault();
                 $('#ibox_form').block({ message: null });
@@ -348,6 +358,10 @@
                     company: $('#company').val(),
                     staff_id: $('#staff_id').val(),
                     item_id: $('#item').val(),
+                    vat_treatment: $('#vat_treatment').length ? $('#vat_treatment').val() : undefined,
+                    vat_amount: $('#vat_amount').val(),
+                    supplier_vat_number: $('#supplier_vat_number').val(),
+                    supplier_invoice_number: $('#supplier_invoice_number').val(),
 
                 })
                     .done(function (data) {

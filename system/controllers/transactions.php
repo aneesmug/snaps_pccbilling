@@ -291,6 +291,7 @@ switch ($action) {
         $items = Item::select(['id','name'])->get()->keyBy('id')->all();
 
         view('transactions_expense', [
+            'vat_treatments' => InputVat::treatments(),
             'currency_rate' => $currency_rate,
             'expense_types' => ExpenseType::orderBy('sorder')->get(),
             'currencies_all' => $currencies_all,
@@ -440,6 +441,19 @@ switch ($action) {
         $staff_id = _post('staff_id');
         $item_id = _post('item_id');
 
+        // Input VAT included in the expense amount (supplier tax invoice / customs declaration)
+        $vat_treatment = InputVat::normalizeTreatment(_post('vat_treatment'));
+        $vat_amount = _post('vat_amount');
+        $vat_amount = $vat_amount === '' ? 0.0 : round((float) createFromCurrency($vat_amount, $currency_iso_code), 2);
+        $supplier_vat_number = InputVat::normalizeDigits(_post('supplier_vat_number'));
+        $supplier_invoice_number = trim((string) _post('supplier_invoice_number'));
+
+        if (is_numeric($amount) && $vat_amount > round((float) $amount, 2)) {
+            $msg .= 'VAT amount cannot be more than the expense amount <br />';
+        }
+
+        $msg .= InputVat::validate($vat_treatment, $vat_amount, $supplier_vat_number, $supplier_invoice_number);
+
         if ($msg == '') {
             Tags::save($tags, 'Expense');
 
@@ -481,7 +495,11 @@ switch ($action) {
             $d->payee = '';
             $d->payerid = '0';
             $d->status = 'Cleared';
-            $d->tax = '0.00';
+            $d->tax = $vat_amount;
+            $d->vat_treatment = $vat_treatment;
+            $d->supplier_vat_number = $supplier_vat_number;
+            $d->supplier_invoice_number = $supplier_invoice_number;
+            $d->reverse_charge_vat = InputVat::reverseChargeVat($vat_treatment, (float) $amount - $vat_amount);
             $d->iid = $invoice_id;
 
             $d->sub_type = $sub_type;
@@ -849,6 +867,7 @@ switch ($action) {
             $items = Item::select(['id','name'])->get()->keyBy('id')->all();
 
             view('transactions_manage', [
+                'vat_treatments' => InputVat::treatments(),
                 'companies' => $companies,
                 'staffs' => $staffs,
                 'items' => $items,
@@ -906,7 +925,33 @@ switch ($action) {
                 $category_name = $category->name;
             }
 
+            // Input VAT can be corrected on standalone expenses; purchase payments take
+            // their VAT from the purchase invoice itself.
+            $edit_vat = $d['type'] === 'Expense' && (int) $d['purchase_id'] === 0 && isset($data['vat_treatment']);
+
+            if ($edit_vat) {
+                $vat_treatment = InputVat::normalizeTreatment(_post('vat_treatment'));
+                $vat_amount = _post('vat_amount');
+                $vat_amount = $vat_amount === '' ? 0.0 : round((float) createFromCurrency($vat_amount, $d['currency_iso_code']), 2);
+                $supplier_vat_number = InputVat::normalizeDigits(_post('supplier_vat_number'));
+                $supplier_invoice_number = trim((string) _post('supplier_invoice_number'));
+
+                if ($vat_amount > round((float) $d['amount'], 2)) {
+                    $msg .= 'VAT amount cannot be more than the expense amount <br />';
+                }
+
+                $msg .= InputVat::validate($vat_treatment, $vat_amount, $supplier_vat_number, $supplier_invoice_number);
+            }
+
             if ($msg == '') {
+                if ($edit_vat) {
+                    $d->tax = $vat_amount;
+                    $d->vat_treatment = $vat_treatment;
+                    $d->supplier_vat_number = $supplier_vat_number;
+                    $d->supplier_invoice_number = $supplier_invoice_number;
+                    $d->reverse_charge_vat = InputVat::reverseChargeVat($vat_treatment, (float) $d['amount'] - $vat_amount);
+                }
+
                 Tags::save($tags, $d['type']);
                 $d->category = $category_name;
                 $d->cat_id = $cat;

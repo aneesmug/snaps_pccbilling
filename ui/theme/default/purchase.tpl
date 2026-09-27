@@ -299,9 +299,50 @@
                                             {*</div>*}
 
                                             <input type="hidden" name="duedate" id="duedate" value="due_on_receipt">
+
+                                            <div class="mb-3">
+                                                <label for="vat_treatment">VAT Treatment</label>
+                                                <select class="form-select" name="vat_treatment" id="vat_treatment">
+                                                    {foreach $vat_treatments as $vt_key => $vt_label}
+                                                        <option value="{$vt_key}" {if $purchase && $purchase->vat_treatment eq $vt_key}selected{/if}>{$vt_label}</option>
+                                                    {/foreach}
+                                                </select>
+                                                <small class="help-block" id="vat_treatment_help"></small>
+                                            </div>
                                         </div>
                                         <div class="col-sm-4">
+                                            <div class="mb-3">
+                                                <label for="supplier_invoice_number" id="supplier_invoice_number_label">Supplier Invoice No.</label>
+                                                <input type="text" class="form-control" id="supplier_invoice_number" name="supplier_invoice_number" maxlength="100"
+                                                       value="{if $purchase}{$purchase->supplier_invoice_number}{/if}">
+                                            </div>
+                                        </div>
+                                    </div>
 
+                                    <div class="row">
+                                        <div class="col-sm-4">
+                                            <div class="mb-3">
+                                                <label for="supplier_invoice_date">Supplier Invoice Date</label>
+                                                <input type="text" class="form-control" id="supplier_invoice_date" name="supplier_invoice_date" datepicker
+                                                       data-date-format="yyyy-mm-dd" data-auto-close="true"
+                                                       value="{if $purchase}{$purchase->supplier_invoice_date}{/if}">
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="mb-3">
+                                                <label for="supplier_vat_number">Supplier VAT No.</label>
+                                                <input type="text" class="form-control" id="supplier_vat_number" name="supplier_vat_number" inputmode="numeric" maxlength="15"
+                                                       placeholder="15 digits, starts and ends with 3"
+                                                       value="{if $purchase}{$purchase->supplier_vat_number}{/if}">
+                                                <small class="help-block">As printed on the supplier's tax invoice. Required to claim input VAT.</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="mb-3" id="reverse_charge_box" style="display:none;">
+                                                <label>Self-assessed VAT (reverse charge)</label>
+                                                <div class="form-control-plaintext" id="reverse_charge_vat">0.00</div>
+                                                <small class="help-block">15% of net, declared as both output and input VAT.</small>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -353,7 +394,7 @@
                                                     <textarea class="form-control item_name" name="desc[]" rows="3">{$item->description}</textarea>
                                                     <input type="hidden" name="item_code[]" value=""> </td> <td><input type="text" class="form-control qty" value="{numberFormatUsingCurrency($item->qty,$purchase->currency_iso_code)}" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value="{numberFormatUsingCurrency($item->amount,$purchase->currency_iso_code)}"></td>  <td> <select class="form-control taxed" name="taxed[]" >
                                                         {foreach $t as $ts}
-                                                            <option value="{$ts['rate']}" {if $ts['is_default'] eq '1'}selected{/if}>{$ts['name']}</option>
+                                                            <option value="{$ts['rate']}" {if $item->tax_name neq ''}{if $item->tax_name eq $ts['name']}selected{/if}{elseif $item->taxed eq '1'}{if $ts['is_default'] eq '1'}selected{/if}{elseif $ts['rate'] == 0}selected{/if}>{$ts['name']}</option>
                                                         {/foreach} </select></td>
 
                                                 <td class="ltotal"><input type="text" class="form-control lvtotal" readonly="" value=""></td>
@@ -768,20 +809,28 @@
                 });
 
 
-                if($discount_type.val() === 'f' && $discount_amount.val() !== ''){
-                    cDiscountVal = $discount_amount.val();
-                }
-                else if($discount_type.val() === 'p' && $discount_amount.val() !== ''){
-                    var tCDiscountval = parseFloat($discount_amount.val());
-                    cDiscountVal = (invTotal*tCDiscountval)/100;
-                }
-                else{
+                // Discount applies to the net subtotal and VAT is charged on the discounted
+                // net (matches purchases/save).
+                var discountType = $('input[name="discount_type"]:checked').val();
+                var discountInput = parseFloat(parseAmount($discount_amount.val() || '0'));
 
+                cDiscountVal = 0;
+                if (discountType === 'f' && discountInput) {
+                    cDiscountVal = discountInput;
+                } else if (discountType === 'p' && discountInput) {
+                    cDiscountVal = (totalLineTotalWithoutTax * discountInput) / 100;
                 }
 
-                cDiscountVal = parseFloat(cDiscountVal);
+                cDiscountVal = isNaN(cDiscountVal) ? 0 : cDiscountVal;
 
-                invTotal = invTotal-cDiscountVal;
+                if (totalLineTotalWithoutTax > 0 && cDiscountVal > 0) {
+                    totalTaxVal = totalTaxVal * Math.max(0, (totalLineTotalWithoutTax - cDiscountVal) / totalLineTotalWithoutTax);
+                }
+
+                invTotal = totalLineTotalWithoutTax - cDiscountVal + totalTaxVal;
+
+                var reverseChargeVat = $('#vat_treatment').val() === 'reverse_charge' ? Math.max(0, totalLineTotalWithoutTax - cDiscountVal) * 0.15 : 0;
+                $('#reverse_charge_vat').html(formatCurrency(reverseChargeVat.toFixed(2)));
 
                 $total.html(formatCurrency(invTotal.toFixed(2)));
                 $taxtotal.html(formatCurrency(totalTaxVal.toFixed(2)));
@@ -875,6 +924,59 @@
 
             }
             update_address();
+
+            var vatTreatmentHelp = {
+                standard: 'Supplier VAT No. and Supplier Invoice No. are required when VAT is charged.',
+                zero: 'Zero-rated supply: no VAT is charged.',
+                exempt: 'Exempt / out-of-scope supply: no VAT is charged.',
+                'import': 'Enter VAT paid at customs as the line VAT and the customs declaration number.',
+                reverse_charge: 'Foreign supplier charges no VAT; 15% is self-assessed as output and input VAT.'
+            };
+
+            function applyVatTreatment(resetLineTax) {
+                var treatment = $('#vat_treatment').val();
+                var noVat = treatment === 'zero' || treatment === 'exempt' || treatment === 'reverse_charge';
+
+                $('#vat_treatment_help').text(vatTreatmentHelp[treatment] || '');
+                $('#supplier_invoice_number_label').text(treatment === 'import' ? 'Customs Declaration No.' : 'Supplier Invoice No.');
+                $('#reverse_charge_box').toggle(treatment === 'reverse_charge');
+
+                if (noVat && resetLineTax) {
+                    $('#invoice_items .taxed').each(function () {
+                        var $zero = $(this).find('option').filter(function () { return parseFloat(this.value) === 0; }).first();
+                        if ($zero.length) {
+                            $(this).val($zero.val());
+                        }
+                    });
+                }
+
+                calculateTotal();
+            }
+
+            $('#vat_treatment').on('change', function () {
+                applyVatTreatment(true);
+            });
+
+            $('#discount_amount, input[name="discount_type"]').on('change keyup', function () {
+                calculateTotal();
+            });
+
+            applyVatTreatment(false);
+
+            function update_supplier_vat(){
+                var cid = $('#cid').val();
+                var $vat = $('#supplier_vat_number');
+                if (!cid || $.trim($vat.val()) !== '') {
+                    return;
+                }
+                $.getJSON($("#_url").val() + 'purchases/supplier-vat/' + cid + '/', function (data) {
+                    if (data && data.vat_number && $.trim($vat.val()) === '') {
+                        $vat.val(data.vat_number);
+                    }
+                });
+            }
+            update_supplier_vat();
+
             $('#cid').select2({
                 language: {
                     noResults: function () {
@@ -888,6 +990,8 @@
                     //  alert(e.val);
 
                     update_address();
+                    $('#supplier_vat_number').val('');
+                    update_supplier_vat();
                 });
 
 

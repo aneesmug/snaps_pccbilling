@@ -65,6 +65,8 @@
                                 <input type="text" class="form-control amount" id="amount" name="amount">
                             </div>
 
+                            {include file="includes/expense-vat-fields.tpl"}
+
                             <div class="mb-3">
                                 <label for="cats"><span class="h6">{$_L['Category']}</span></label>
                                 <select id="cats" name="cats" class="form-control">
@@ -409,6 +411,8 @@
 
             var _url = $("#_url").val();
 
+            {include file="includes/expense-vat.js"}
+
 
 
 
@@ -488,6 +492,10 @@
                     company: $('#company').val(),
                     staff_id: $('#staff_id').val(),
                     item_id: $('#item').val(),
+                    vat_treatment: $('#vat_treatment').val(),
+                    vat_amount: $('#vat_amount').val(),
+                    supplier_vat_number: $('#supplier_vat_number').val(),
+                    supplier_invoice_number: $('#supplier_invoice_number').val(),
 
                 })
                     .done(function (data) {

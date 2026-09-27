@@ -548,6 +548,11 @@ class Purchase extends Model
             $d->currency = $inv->currency;
             $d->currency_symbol = $inv->currency_symbol;
             $d->currency_rate = $inv->currency_rate;
+
+            // Supplier invoice No./date are per invoice, so they are not cloned.
+            $d->vat_treatment = $inv->vat_treatment;
+            $d->supplier_vat_number = $inv->supplier_vat_number;
+            $d->reverse_charge_vat = $inv->reverse_charge_vat;
             $d->save();
             $invoiceid = $d->id();
 
@@ -564,6 +569,8 @@ class Purchase extends Model
                 $t->amount = $item['amount'];
                 $t->total = $item['total'];
                 $t->taxed = $item['taxed'];
+                $t->tax_rate = $item['tax_rate'];
+                $t->tax_name = $item['tax_name'];
                 $t->type = '';
                 $t->relid = '0';
                 $t->itemcode = $item['itemcode'];

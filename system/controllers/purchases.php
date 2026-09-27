@@ -77,6 +77,7 @@ switch ($action) {
             'purchase' => $purchase,
             'purchase_items' => $purchase_items,
             'currencies' => getActiveCurrencies(),
+            'vat_treatments' => InputVat::treatments(),
         ]);
 
         break;
@@ -634,6 +635,8 @@ switch ($action) {
                 $i++;
             }
 
+            $sTotal = round((float) $sTotal, 2);
+
             $invoicenum = _post('invoicenum');
             $cn = _post('cn');
             $fTotal = $sTotal;
@@ -658,7 +661,29 @@ switch ($action) {
                 '.',
                 ''
             );
-            $fTotal = $fTotal + $taxed_amount - $actual_discount;
+
+            // VAT is charged on the net amount after discount, so scale the line VAT by the
+            // discounted share of the subtotal (same result as allocating the discount per line).
+            if ($sTotal > 0 && (float) $actual_discount > 0) {
+                $taxed_amount = $taxed_amount * max(0.0, ($sTotal - (float) $actual_discount) / $sTotal);
+            }
+            $taxed_amount = round((float) $taxed_amount, 2);
+
+            $fTotal = round($sTotal + $taxed_amount - (float) $actual_discount, 2);
+
+            // Input VAT details (supplier tax invoice / customs declaration)
+            $vat_treatment = InputVat::normalizeTreatment(_post('vat_treatment'));
+            $supplier_invoice_number = trim((string) _post('supplier_invoice_number'));
+            $supplier_invoice_date = trim((string) _post('supplier_invoice_date'));
+            $supplier_vat_number = InputVat::normalizeDigits(_post('supplier_vat_number'));
+
+            if ($supplier_invoice_date !== '' && !strtotime($supplier_invoice_date)) {
+                $msg .= 'Invalid Supplier Invoice Date <br /> ';
+            }
+
+            $msg .= InputVat::validate($vat_treatment, $taxed_amount, $supplier_vat_number, $supplier_invoice_number);
+
+            $reverse_charge_vat = InputVat::reverseChargeVat($vat_treatment, $sTotal - (float) $actual_discount);
 
             $status = _post('status');
             if ($status != 'Draft') {
@@ -672,6 +697,11 @@ switch ($action) {
             $ptoken = strtolower(Str::random(20));
 
             $purchase = false;
+
+            if ($msg !== '') {
+                echo $msg;
+                break;
+            }
 
             if (_post('purchase_id') !== '' && _post('purchase_id') !== '0') {
                 $purchase = Purchase::find(_post('purchase_id'));
@@ -724,7 +754,27 @@ switch ($action) {
 
             $purchase->subject = _post('subject');
 
+            $purchase->vat_treatment = $vat_treatment;
+            $purchase->supplier_invoice_number = $supplier_invoice_number;
+            $purchase->supplier_invoice_date = $supplier_invoice_date !== '' ? date('Y-m-d', strtotime($supplier_invoice_date)) : null;
+            $purchase->supplier_vat_number = $supplier_vat_number;
+            $purchase->reverse_charge_vat = $reverse_charge_vat;
+
             $purchase->save();
+
+            // Keep the supplier's VAT number on the contact for the next purchase.
+            if ($u && $supplier_vat_number !== '' && InputVat::isValidVatNumber($supplier_vat_number) && (string) $u['tax_number'] === '') {
+                $u->tax_number = $supplier_vat_number;
+                $u->save();
+            }
+
+            $tax_names = [];
+            foreach (ORM::for_table('sys_tax')->order_by_desc('is_default')->order_by_asc('id')->find_array() as $tax_row) {
+                $rate_key = number_format((float) $tax_row['rate'], 3, '.', '');
+                if (!isset($tax_names[$rate_key])) {
+                    $tax_names[$rate_key] = $tax_row['name'];
+                }
+            }
             $invoiceid = $purchase->id;
             $description = $data['desc'];
 
@@ -750,7 +800,9 @@ switch ($action) {
                 $d->amount = $samount;
                 $d->total = $ltotal;
 
-                if ($tax_rate == '' || $taxrate == '0') {
+                $tax_rate = (float) Finance::amount_fix($tax_rate);
+
+                if ($tax_rate <= 0) {
                     $tax_rate = 0.0;
                     $d->taxed = '0';
                 } else {
@@ -758,11 +810,12 @@ switch ($action) {
                 }
 
                 $d->tax_rate = $tax_rate;
+                $d->tax_name = $tax_names[number_format($tax_rate, 3, '.', '')] ?? '';
 
                 $d->type = '';
                 $d->relid = '0';
                 $d->itemcode = $item_number[$i];
-                $d->taxamount = '0.00';
+                $d->taxamount = round($ltotal * $tax_rate / 100, 2);
                 $d->duedate = date('Y-m-d');
                 $d->paymentmethod = '';
                 $d->notes = '';
@@ -793,6 +846,12 @@ switch ($action) {
         } else {
             echo $msg;
         }
+
+        break;
+
+    case 'supplier-vat':
+        header('Content-Type: application/json');
+        echo json_encode(['vat_number' => InputVat::contactVatNumber((int) route(2))]);
 
         break;
 
