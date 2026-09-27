@@ -765,7 +765,7 @@
                 // create the backdrop and wait for next modal to be triggered
                 $('body').modalmanager('loading');
 
-                $modal.load( _url + 'contacts/modal_add/', '', function(){
+                $modal.load( _url + 'contacts/modal_add/supplier/', '', function(){
                     $modal.modal();
                     $("#ajax-modal .country").select2({
                         theme: "bootstrap"
@@ -886,24 +886,17 @@
 
                 var errors = [];
 
+                // Suppliers are not reported to ZATCA: only the name is required and
+                // ZATCA identifiers are format-checked when entered.
                 if (buyerType !== 'company' && buyerType !== 'individual') {
-                    errors.push('Buyer Type is required');
+                    errors.push('Supplier Type is required');
                 } else if (buyerType === 'individual') {
                     if (!accountName) { errors.push('Full Name is required'); }
-                    if (!phone) { errors.push('Phone is required'); }
                     if (idIqama && !/^\d{10}$/.test(idIqama)) { errors.push('ID / Iqama must be exactly 10 digits'); }
                 } else {
-                    if (!selectedCompanyId) { errors.push('Registered Company is required'); }
                     if (!companyName) { errors.push('Company Name is required'); }
-                    if (!phone) { errors.push('Phone is required'); }
-                    if (!address) { errors.push('Address is required'); }
-                    if (!city) { errors.push('City is required'); }
-                    if (!state) { errors.push('State/Region is required'); }
-                    if (!zip) { errors.push('ZIP/Postal Code is required'); }
-                    if (!country) { errors.push('Country is required'); }
-                    if (!buildingNumber) { errors.push('Building Number is required'); }
-                    if (!/^3\d{13}3$/.test(vatNumber)) { errors.push('VAT Number must be 15 digits and start/end with 3'); }
-                    if (!/^\d{10}$/.test(crnNumber)) { errors.push('Unified No. (700#) must be 10 digits'); }
+                    if (vatNumber && !/^3\d{13}3$/.test(vatNumber)) { errors.push('VAT Number must be 15 digits and start/end with 3'); }
+                    if (crnNumber && !/^\d{10}$/.test(crnNumber)) { errors.push('Unified No. (700#) must be 10 digits'); }
                 }
 
                 if (errors.length > 0) {
@@ -931,7 +924,8 @@
                     crn_number: isCompany ? crnNumber : '',
                     id_iqama: buyerType === 'individual' ? idIqama : '',
                     phone: phone,
-                    email: email
+                    email: email,
+                    supplier: 'Supplier'
 
                 })
                     .done(function (data) {

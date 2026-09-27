@@ -803,6 +803,12 @@ switch ($action) {
 
         $is_new_company = $buyer_type === 'company' && $company_id === '__new__';
 
+        // ZATCA Phase 2 only mandates buyer details on invoices WE issue (customers).
+        // Supplier-only contacts are never sent to ZATCA, so only the name is required
+        // and ZATCA identifiers are format-checked when entered (VAT is needed to claim
+        // input VAT on purchases, but is not mandatory to create the supplier).
+        $is_customer = strpos($type, 'Customer') !== false;
+
         if ($currency == '') {
             $currency = '0';
         }
@@ -818,14 +824,24 @@ switch ($action) {
         }
 
         if ($buyer_type !== 'company' && $buyer_type !== 'individual') {
-            $msg .= 'Buyer Type is required <br>';
+            $msg .= ($is_customer ? 'Buyer Type' : 'Supplier Type') . ' is required <br>';
         }
 
-        if ($buyer_type === 'company' && $company_id === '') {
+        if ($is_customer && $buyer_type === 'company' && $company_id === '') {
             $msg .= 'Registered Company is required <br>';
         }
 
-        if ($buyer_type === 'company') {
+        if (!$is_customer) {
+            if ($buyer_type === 'company' && _post('company') == '') {
+                $msg .= $_L['Company Name'] . ' is required <br>';
+            }
+            if ($vat_number !== '' && !preg_match('/^3\d{13}3$/', $vat_number)) {
+                $msg .= 'VAT Number must be 15 digits and start/end with 3 <br>';
+            }
+            if ($crn_number !== '' && !preg_match('/^\d{10}$/', $crn_number)) {
+                $msg .= 'Unified No. (700#) must be 10 digits <br>';
+            }
+        } elseif ($buyer_type === 'company') {
             // Company info (whether picking an existing registered company or creating a
             // new one) must always be complete — this is what other contacts at the same
             // company will be linked against.
@@ -861,7 +877,7 @@ switch ($action) {
             }
         }
 
-        if ($buyer_type === 'individual' && $phone == '') {
+        if ($is_customer && $buyer_type === 'individual' && $phone == '') {
             $msg .= $_L['Phone'] . ' is required <br>';
         }
 
@@ -996,6 +1012,10 @@ switch ($action) {
                 $c->state    = $state;
                 $c->zip      = $zip;
                 $c->country  = $country;
+
+                $c->vat_number      = $vat_number;
+                $c->crn_number      = $crn_number;
+                $c->building_number = $building_number;
 
                 $c->save();
 
@@ -1393,21 +1413,36 @@ switch ($action) {
 
             $is_new_company = $buyer_type === 'company' && $company_id === '__new__';
 
+            // ZATCA Phase 2 only mandates buyer details on invoices WE issue (customers).
+            // Supplier-only contacts just need a name; ZATCA identifiers are format-checked
+            // when entered.
+            $is_customer = strpos($type, 'Customer') !== false;
+
             $msg = '';
 
             if ($buyer_type !== 'company' && $buyer_type !== 'individual') {
-                $msg .= 'Buyer Type is required <br>';
+                $msg .= ($is_customer ? 'Buyer Type' : 'Supplier Type') . ' is required <br>';
             }
 
             if ($account == '') {
                 $msg .= $_L['Account Name is required'] . ' <br>';
             }
 
-            if ($buyer_type === 'company' && $company_id === '') {
+            if ($is_customer && $buyer_type === 'company' && $company_id === '') {
                 $msg .= 'Registered Company is required <br>';
             }
 
-            if ($buyer_type === 'company') {
+            if (!$is_customer) {
+                if ($buyer_type === 'company' && _post('company') == '') {
+                    $msg .= $_L['Company Name'] . ' is required <br>';
+                }
+                if ($vat_number !== '' && !preg_match('/^3\d{13}3$/', $vat_number)) {
+                    $msg .= 'VAT Number must be 15 digits and start/end with 3 <br>';
+                }
+                if ($crn_number !== '' && !preg_match('/^\d{10}$/', $crn_number)) {
+                    $msg .= 'Unified No. (700#) must be 10 digits <br>';
+                }
+            } elseif ($buyer_type === 'company') {
                 // Company info (whether picking an existing registered company or creating a
                 // new one) must always be complete — this is what other contacts at the same
                 // company will be linked against.
@@ -1443,7 +1478,7 @@ switch ($action) {
                 }
             }
 
-            if ($buyer_type === 'individual' && $phone == '') {
+            if ($is_customer && $buyer_type === 'individual' && $phone == '') {
                 $msg .= $_L['Phone'] . ' is required <br>';
             }
 
@@ -1569,6 +1604,30 @@ switch ($action) {
                     $c->phone        = $phone;
                     $c->url          = _post('company_url', 'http://');
                     $c->logo_url     = _post('logo_url', '');
+
+                    $c->address1     = $address;
+                    $c->city         = $city;
+                    $c->state        = $state;
+                    $c->zip          = $zip;
+                    $c->country      = $country;
+                    $c->aid          = $user->id;
+
+                    $c->vat_number      = $vat_number;
+                    $c->crn_number      = $crn_number;
+                    $c->building_number = $building_number;
+
+                    $c->save();
+                    $cid = $c->id;
+                    $company_id = $cid;
+                } elseif ($buyer_type === 'company' && _post('company') != '') {
+                    // Supplier without a registered company selected: create one so the
+                    // company name and optional ZATCA identifiers are kept.
+                    $company = _post('company');
+                    $c = new Company();
+
+                    $c->company_name = $company;
+                    $c->email        = $email;
+                    $c->phone        = $phone;
 
                     $c->address1     = $address;
                     $c->city         = $city;
@@ -1895,6 +1954,10 @@ $country
             ->find_array();
 
         $ui->assign('companies', $companies);
+
+        // Purchases load this modal as contacts/modal_add/supplier/ so customer-only
+        // (ZATCA buyer) required markers can be dropped.
+        $ui->assign('modal_contact_type', route(2) === 'supplier' ? 'supplier' : 'customer');
 
         view('modal_add_contact');
 

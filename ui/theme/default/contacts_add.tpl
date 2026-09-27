@@ -33,10 +33,27 @@
                                 <div class="row">
                                     <div class="col-md-6 col-sm-12">
                                         <div class="mb-3 row">
-                                            <label for="buyer_type" class="col-sm-3"><span class="h6">Buyer Type</span><span class="text-danger">*</span></label>
+                                            <label for="type" class="col-sm-3"><span class="h6">{$_L['Type']}</span> </label>
+                                            <div class="col-sm-9">
+                                                <div class="custom-control my-2 custom-checkbox">
+                                                    <input type="checkbox" class="custom-control-input js-contact-type" id="defaultChecked" name="customer" value="Customer" {if $contact_type eq 'customer'}checked{/if}>
+                                                    <label class="custom-control-label" for="defaultChecked"><span class="h6">{$_L['Customer']}</span></label>
+                                                </div>
+
+                                                <div class="custom-control my-2 custom-checkbox">
+                                                    <input type="checkbox" class="custom-control-input js-contact-type" id="input_supplier" name="supplier" value="Supplier" {if $contact_type eq 'supplier'}checked{/if}>
+                                                    <label class="custom-control-label" for="input_supplier"><span class="h6">{$_L['Supplier']}</span></label>
+                                                </div>
+
+                                                <small class="help-block supplier-only-hint" style="display:none;">Supplier only: just the name is required. ZATCA Phase 2 buyer details are required for customers only. Enter the supplier VAT number to claim input VAT on purchases.</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3 row">
+                                            <label for="buyer_type" class="col-sm-3"><span class="h6 js-party-type-label">Buyer Type</span><span class="text-danger">*</span></label>
                                             <div class="col-sm-9">
                                                 <select id="buyer_type" name="buyer_type" class="form-control" required>
-                                                    <option value="" selected>--Select Buyer Type--</option>
+                                                    <option value="" selected>--Select Type--</option>
                                                     <option value="company">Company</option>
                                                     <option value="individual">Individual</option>
                                                 </select>
@@ -65,7 +82,7 @@
                                         </div>
 
                                         <div class="mb-3 row buyer-after-type buyer-company-selector-only" style="display:none;">
-                                            <label for="cid" class="col-sm-3"><span class="h6">Registered Company</span><span class="text-danger">*</span></label>
+                                            <label for="cid" class="col-sm-3"><span class="h6">Registered Company</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
                                                 <select id="cid" name="cid" class="form-control" required>
                                                     <option value="">--Select Registered Company--</option>
@@ -94,7 +111,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
+                                        <div class="mb-3 row buyer-after-type buyer-company-only customer-only" style="display:none;">
                                             <label for="logo_url" class="col-sm-3"><span class="h6">{$_L['Logo URL']}</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" id="logo_url" name="logo_url" class="form-control">
@@ -102,21 +119,21 @@
                                         </div>
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="building_number" class="col-sm-3"><span class="h6">Building Number</span><span class="text-danger">*</span></label>
+                                            <label for="building_number" class="col-sm-3"><span class="h6">Building Number</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" id="building_number" name="building_number" class="form-control" inputmode="numeric" maxlength="10" placeholder="e.g. 1234" required>
                                             </div>
                                         </div>
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="vat_number" class="col-sm-3"><span class="h6">VAT Number</span><span class="text-danger">*</span></label>
+                                            <label for="vat_number" class="col-sm-3"><span class="h6">VAT Number</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" id="vat_number" name="vat_number" class="form-control" maxlength="15" placeholder="15 digits, starts and ends with 3" required>
                                             </div>
                                         </div>
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="crn_number" class="col-sm-3"><span class="h6">Unified No. (700#)</span><span class="text-danger">*</span></label>
+                                            <label for="crn_number" class="col-sm-3"><span class="h6">Unified No. (700#)</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
                                                 <input type="text" id="crn_number" name="crn_number" class="form-control" maxlength="10" placeholder="10 digits" required>
                                             </div>
@@ -143,23 +160,6 @@
 
                                         {/if}
 
-                                        <div class="mb-3 row">
-                                            <label for="type" class="col-sm-3"><span class="h6">{$_L['Type']}</span> </label>
-                                            <div class="col-sm-9">
-                                                <div class="custom-control my-2 custom-checkbox">
-                                                    <input type="checkbox" class="custom-control-input" id="defaultChecked" name="customer" value="Customer" {if $contact_type eq 'customer'}checked{/if}>
-                                                    <label class="custom-control-label" for="defaultChecked"><span class="h6">{$_L['Customer']}</span></label>
-                                                </div>
-
-                                                <div class="custom-control my-2 custom-checkbox">
-                                                    <input type="checkbox" class="custom-control-input" id="input_supplier" name="supplier" value="Supplier" {if $contact_type eq 'supplier'}checked{/if}>
-                                                    <label class="custom-control-label" for="input_supplier"><span class="h6">{$_L['Supplier']}</span></label>
-                                                </div>
-
-                                            </div>
-                                        </div>
-
-
                                         {if $config['fax_field'] eq '1'}
 
                                             <div class="mb-3 row">
@@ -178,7 +178,7 @@
 
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="address" class="col-sm-3"><span class="h6">{$_L['Address']}</span><span class="text-danger">*</span></label>
+                                            <label for="address" class="col-sm-3"><span class="h6">{$_L['Address']}</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
 
                                                 <input type="text" id="address" name="address" class="form-control" required>
@@ -188,7 +188,7 @@
                                         </div>
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="city" class="col-sm-3"><span class="h6">{$_L['City']}</span><span class="text-danger">*</span></label>
+                                            <label for="city" class="col-sm-3"><span class="h6">{$_L['City']}</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
 
                                                 <input type="text" id="city" name="city" class="form-control" required>
@@ -198,7 +198,7 @@
                                         </div>
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="state" class="col-sm-3"><span class="h6">{$_L['State Region']}</span><span class="text-danger">*</span></label>
+                                            <label for="state" class="col-sm-3"><span class="h6">{$_L['State Region']}</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
 
                                                 <input type="text" id="state" name="state" class="form-control" required>
@@ -209,7 +209,7 @@
 
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="zip" class="col-sm-3"><span class="h6">{$_L['ZIP Postal Code']}</span><span class="text-danger">*</span></label>
+                                            <label for="zip" class="col-sm-3"><span class="h6">{$_L['ZIP Postal Code']}</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
 
                                                 <input type="text" id="zip" name="zip" class="form-control" required>
@@ -218,7 +218,7 @@
 
 
                                         <div class="mb-3 row buyer-after-type buyer-company-only" style="display:none;">
-                                            <label for="country" class="col-sm-3"><span class="h6">{$_L['Country']}</span><span class="text-danger">*</span></label>
+                                            <label for="country" class="col-sm-3"><span class="h6">{$_L['Country']}</span><span class="text-danger customer-req">*</span></label>
                                             <div class="col-sm-9">
 
                                                 <select name="country" id="country" class="form-control" required>
@@ -322,7 +322,7 @@
                                             </div>
                                         </div>
                                         <div class="mb-3 row buyer-after-type" style="display:none;">
-                                            <label for="phone" class="col-sm-3"><span class="h6">{$_L['Phone']}</span><span class="text-danger">*</span> </label>
+                                            <label for="phone" class="col-sm-3"><span class="h6">{$_L['Phone']}</span><span class="text-danger customer-req">*</span> </label>
                                             <div class="col-sm-9">
 
                                                 <input type="text" id="phone" name="phone" class="form-control" required>
@@ -389,7 +389,7 @@
 
                                         {/if}
 
-                                        <div class="mb-3 row">
+                                        <div class="mb-3 row customer-only">
                                             <label for="password" class="col-sm-3"><span class="h6">{$_L['Password']}</span> </label>
                                             <div class="col-sm-9">
                                                 <input type="password" id="password" name="password" class="form-control">
@@ -397,7 +397,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row">
+                                        <div class="mb-3 row customer-only">
                                             <label for="cpassword" class="col-sm-3"><span class="h6">{$_L['Confirm Password']}</span></label>
                                             <div class="col-sm-9">
 
@@ -405,7 +405,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="mb-3 row">
+                                        <div class="mb-3 row customer-only">
                                             <label for="send_client_signup_email" class="col-sm-3"><span class="h6">{$_L['Welcome Email']}</span></label>
                                             <div class="col-sm-9">
                                                 <label class="switch s-icons s-outline s-outline-primary">
@@ -482,9 +482,25 @@
                 $('.buyer-company-selector-only').toggle(isCompany);
                 $('.buyer-company-only').toggle(isCompany);
                 $('.buyer-individual-only').toggle(isIndividual);
+
+                // Supplier-only contacts are never reported to ZATCA: drop the customer-only
+                // required markers and hide client-portal fields.
+                var supplierOnly = $('#input_supplier').is(':checked') && !$('#defaultChecked').is(':checked');
+
+                $('.js-party-type-label').text(supplierOnly ? 'Supplier Type' : 'Buyer Type');
+                $('.customer-req').toggle(!supplierOnly);
+                $('.supplier-only-hint').toggle(supplierOnly);
+                $('.customer-only').not('.buyer-after-type').toggle(!supplierOnly);
+                if (supplierOnly) {
+                    $('.customer-only.buyer-after-type').hide();
+                }
             }
 
             $buyerType.on('change', function () {
+                applyBuyerTypeRules();
+            });
+
+            $('.js-contact-type').on('change', function () {
                 applyBuyerTypeRules();
             });
 

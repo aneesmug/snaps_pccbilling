@@ -2,13 +2,17 @@
 
     <div class="panel mb-0 rounded-0">
         <div class="panel-hdr">
-            <h2>{$_L['Add New Contact']}</h2>
+            <h2>{if $modal_contact_type eq 'supplier'}{$_L['Add Supplier']}{else}{$_L['Add New Contact']}{/if}</h2>
         </div>
         <div class="panel-container">
             <div class="panel-content">
                 <form class="form-horizontal" id="rform">
 
-                    <div class="mb-3"><label for="buyer_type">Buyer Type <span class="text-danger">*</span></label>
+                    {if $modal_contact_type eq 'supplier'}
+                        <style>#rform .customer-req { display: none; }</style>
+                        <small class="help-block d-block mb-2">Supplier: only the name is required. Enter the VAT number to claim input VAT on purchases.</small>
+                    {/if}
+                    <div class="mb-3"><label for="buyer_type">{if $modal_contact_type eq 'supplier'}Supplier Type{else}Buyer Type{/if} <span class="text-danger">*</span></label>
                         <select id="buyer_type" name="buyer_type" class="form-control" required onchange="if (window.applyInvoiceContactModalBuyerTypeRules) { window.applyInvoiceContactModalBuyerTypeRules(); }">
                             <option value="" selected>--Select Buyer Type--</option>
                             <option value="company">Company</option>
@@ -16,7 +20,7 @@
                         </select>
                     </div>
 
-                    <div class="mb-3 buyer-after-type buyer-company-selector-only" style="display:none;"><label for="modal_company_id">Registered Company <span class="text-danger">*</span></label>
+                    <div class="mb-3 buyer-after-type buyer-company-selector-only" style="display:none;"><label for="modal_company_id">Registered Company <span class="text-danger customer-req">*</span></label>
 
                         <select id="modal_company_id" name="cid" class="form-control" required onchange="if (window.applyInvoiceContactModalBuyerTypeRules) { window.applyInvoiceContactModalBuyerTypeRules(); }">
                             <option value="">--Select Registered Company--</option>
@@ -44,7 +48,7 @@
                             <input type="text" id="company" name="company" class="form-control" required>
                         </div>
 
-                        <div class="col-md-6 mb-3 buyer-after-type" style="display:none;"><label for="phone">{$_L['Phone']} <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type" style="display:none;"><label for="phone">{$_L['Phone']} <span class="text-danger customer-req">*</span></label>
 
                             <input type="text" id="phone" name="phone" class="form-control js-digits-only" inputmode="numeric" required>
                         </div>
@@ -55,7 +59,7 @@
 
                         </div>
 
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="building_number">Building Number <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="building_number">Building Number <span class="text-danger customer-req">*</span></label>
 
                             <input type="text" id="building_number" name="building_number" class="form-control js-digits-only" inputmode="numeric" maxlength="10" placeholder="e.g. 1234" required>
                         </div>
@@ -70,24 +74,24 @@
                             <input type="text" id="logo_url" name="logo_url" class="form-control">
                         </div>
 
-                        <div class="col-12 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="m_address">{$_L['Address']} <span class="text-danger">*</span></label>
+                        <div class="col-12 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="m_address">{$_L['Address']} <span class="text-danger customer-req">*</span></label>
 
                             <input type="text" id="m_address" name="m_address" class="form-control" required>
                         </div>
 
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="city">{$_L['City']} <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="city">{$_L['City']} <span class="text-danger customer-req">*</span></label>
 
                             <input type="text" id="city" name="city" class="form-control" required>
                         </div>
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="state">{$_L['State Region']} <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="state">{$_L['State Region']} <span class="text-danger customer-req">*</span></label>
 
                             <input type="text" id="state" name="state" class="form-control" required>
                         </div>
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="zip">{$_L['ZIP Postal Code']} <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="zip">{$_L['ZIP Postal Code']} <span class="text-danger customer-req">*</span></label>
 
                             <input type="text" id="zip" name="zip" class="form-control js-digits-only" inputmode="numeric" required>
                         </div>
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="country">{$_L['Country']} <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="country">{$_L['Country']} <span class="text-danger customer-req">*</span></label>
 
                             <select name="country" class="country" id="country" class="form-control" required>
                                 <option value="">{$_L['Select Country']}</option>
@@ -95,12 +99,12 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="vat_number">VAT Number <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="vat_number">VAT Number <span class="text-danger customer-req">*</span></label>
                             <input type="text" id="vat_number" name="vat_number" class="form-control js-digits-only" inputmode="numeric" maxlength="15" placeholder="15 digits, starts and ends with 3" required>
                             <small class="help-block">Used for company VAT.</small>
                         </div>
 
-                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="crn_number">Unified No. (700#) <span class="text-danger">*</span></label>
+                        <div class="col-md-6 mb-3 buyer-after-type buyer-company-only" style="display:none;"><label for="crn_number">Unified No. (700#) <span class="text-danger customer-req">*</span></label>
                             <input type="text" id="crn_number" name="crn_number" class="form-control js-digits-only" inputmode="numeric" maxlength="10" placeholder="10 digits" required>
                             <small class="help-block">Used for company Unified No. (700#).</small>
                         </div>

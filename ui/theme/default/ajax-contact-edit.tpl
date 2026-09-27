@@ -1,9 +1,30 @@
 <form class="form-horizontal" id="rform">
 
-    <div class="mb-3"><label for="buyer_type"><span class="h6">Buyer Type</span><span class="text-danger">*</span></label>
+    <div class="mb-3"><label for="cid"><span class="h6">{$_L['Type']}</span> </label>
+
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" class="custom-checkbox js-contact-type" id="edit_type_customer" name="customer" value="Customer" {if $d->type == 'Customer,Supplier' || $d->type == 'Customer' } checked {/if}>
+                {$_L['Customer']}
+            </label>
+        </div>
+
+        {if $config['suppliers'] eq '1'}
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" class="custom-checkbox js-contact-type" id="edit_type_supplier" name="supplier" value="Supplier"  {if $d->type == 'Customer,Supplier' || $d->type == 'Supplier' } checked {/if}>
+                    {$_L['Supplier']}
+                </label>
+            </div>
+        {/if}
+
+        <small class="help-block supplier-only-hint" style="display:none;">Supplier only: just the name is required. ZATCA Phase 2 buyer details are required for customers only. Enter the supplier VAT number to claim input VAT on purchases.</small>
+    </div>
+
+    <div class="mb-3"><label for="buyer_type"><span class="h6 js-party-type-label">Buyer Type</span><span class="text-danger">*</span></label>
 
         <select id="buyer_type" name="buyer_type" class="form-control" required>
-            <option value="" {if ($d['buyer_type']|default:'') eq ''}selected{/if}>--Select Buyer Type--</option>
+            <option value="" {if ($d['buyer_type']|default:'') eq ''}selected{/if}>--Select Type--</option>
             <option value="company" {if ($d['buyer_type']|default:'') eq 'company'}selected{/if}>Company</option>
             <option value="individual" {if ($d['buyer_type']|default:'') eq 'individual'}selected{/if}>Individual</option>
         </select>
@@ -29,7 +50,7 @@
 
         </div>
         <div class="col-md-6 buyer-after-type buyer-company-selector-only" style="display:none;">
-            <div class="mb-3 h6"><label for="company_id"><span class="h6">Registered Company</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="company_id"><span class="h6">Registered Company</span><span class="text-danger customer-req">*</span></label>
 
                 <select id="company_id" name="company_id" class="form-control" required>
                     <option value="">--Select Registered Company--</option>
@@ -57,7 +78,7 @@
                 <input type="text" id="company_url" name="company_url" class="form-control" placeholder="http://" value="{if $linked_company}{$linked_company['url']}{/if}">
             </div>
         </div>
-        <div class="col-md-6 buyer-after-type buyer-company-only" style="display:none;">
+        <div class="col-md-6 buyer-after-type buyer-company-only customer-only" style="display:none;">
             <div class="mb-3 h6"><label for="logo_url"><span class="h6">{$_L['Logo URL']}</span></label>
 
                 <input type="text" id="logo_url" name="logo_url" class="form-control" value="{if $linked_company}{$linked_company['logo_url']}{/if}">
@@ -67,13 +88,13 @@
 
     <div class="row mt-2">
         <div class="col-md-6 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="vat_number"><span class="h6">VAT Number</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="vat_number"><span class="h6">VAT Number</span><span class="text-danger customer-req">*</span></label>
                 <input type="text" id="vat_number" name="vat_number" class="form-control js-digits-only" inputmode="numeric" maxlength="15" placeholder="15 digits, starts and ends with 3" value="{if $linked_company}{$linked_company['vat_number']}{else}{$d['tax_number']}{/if}" required>
                 <small class="help-block">Used for company VAT.</small>
             </div>
         </div>
         <div class="col-md-6 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="crn_number"><span class="h6">Unified No. (700#)</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="crn_number"><span class="h6">Unified No. (700#)</span><span class="text-danger customer-req">*</span></label>
                 <input type="text" id="crn_number" name="crn_number" class="form-control js-digits-only" inputmode="numeric" maxlength="10" placeholder="10 digits" value="{if $linked_company}{$linked_company['crn_number']}{else}{$d['entity_number']}{/if}" required>
                 <small class="help-block">Used for company Unified No. (700#).</small>
             </div>
@@ -100,7 +121,7 @@
 
     <div class="row mt-2">
         <div class="col-md-6 buyer-after-type" style="display:none;">
-            <div class="mb-3 h6"><label for="phone"><span class="h6">{$_L['Phone']}</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="phone"><span class="h6">{$_L['Phone']}</span><span class="text-danger customer-req">*</span></label>
 
                 <input type="text" id="phone" name="phone" class="form-control" value="{$d['phone']}" required>
             </div>
@@ -142,20 +163,20 @@
     {/if}
 
 
-    <div class="mb-3 h6 buyer-after-type buyer-company-only" style="display:none;"><label for="address"><span class="h6">{$_L['Address']}</span><span class="text-danger">*</span></label>
+    <div class="mb-3 h6 buyer-after-type buyer-company-only" style="display:none;"><label for="address"><span class="h6">{$_L['Address']}</span><span class="text-danger customer-req">*</span></label>
 
         <input type="text" id="address" name="address" class="form-control" value="{if $linked_company}{$linked_company['address1']}{else}{$d['address']}{/if}" required>
     </div>
     <div class="row mt-2">
         <div class="col-md-6 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="city"><span class="h6">{$_L['City']}</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="city"><span class="h6">{$_L['City']}</span><span class="text-danger customer-req">*</span></label>
 
                 <input type="text" id="city" name="city" class="form-control" value="{if $linked_company}{$linked_company['city']}{else}{$d['city']}{/if}" required>
             </div>
 
         </div>
         <div class="col-md-6 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="state"><span class="h6">{$_L['State Region']}</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="state"><span class="h6">{$_L['State Region']}</span><span class="text-danger customer-req">*</span></label>
                 <input type="text" id="state" name="state" class="form-control" value="{if $linked_company}{$linked_company['state']}{else}{$d['state']}{/if}" required>
             </div>
 
@@ -164,17 +185,17 @@
 
     <div class="row mt-2">
         <div class="col-md-4 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="zip"><span class="h6">{$_L['ZIP Postal Code']}</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="zip"><span class="h6">{$_L['ZIP Postal Code']}</span><span class="text-danger customer-req">*</span></label>
                 <input type="text" id="zip" name="zip" class="form-control" value="{if $linked_company}{$linked_company['zip']}{else}{$d['zip']}{/if}" required>
             </div>
         </div>
         <div class="col-md-4 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="building_number"><span class="h6">Building Number</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="building_number"><span class="h6">Building Number</span><span class="text-danger customer-req">*</span></label>
                 <input type="text" id="building_number" name="building_number" class="form-control js-digits-only" value="{if $linked_company}{$linked_company['building_number']}{else}{$d['building_number']}{/if}" inputmode="numeric" maxlength="10" placeholder="e.g. 1234" required>
             </div>
         </div>
         <div class="col-md-4 buyer-after-type buyer-company-only" style="display:none;">
-            <div class="mb-3 h6"><label for="country"><span class="h6">{$_L['Country']}</span><span class="text-danger">*</span></label>
+            <div class="mb-3 h6"><label for="country"><span class="h6">{$_L['Country']}</span><span class="text-danger customer-req">*</span></label>
                 <select name="country" id="country" class="form-control" required>
                     <option value="">{$_L['Select Country']}</option>
                     {$countries}
@@ -248,7 +269,7 @@
         {/if}
 
 
-        <div class="mb-3 h6"><label for="password"><span class="h6">{$_L['Password']}</span> </label>
+        <div class="mb-3 h6 customer-only"><label for="password"><span class="h6">{$_L['Password']}</span> </label>
 
             <input type="password" id="password" name="password" class="form-control" autocomplete="new-password">
 
@@ -297,25 +318,6 @@
             {/if}
         </div>
     {/foreach}
-
-    <div class="mb-3"><label for="cid"><span class="h6">{$_L['Type']}</span> </label>
-
-        <div class="checkbox">
-            <label>
-                <input type="checkbox" class="custom-checkbox" name="customer" value="Customer" {if $d->type == 'Customer,Supplier' || $d->type == 'Customer' } checked {/if}>
-                {$_L['Customer']}
-            </label>
-        </div>
-
-        {if $config['suppliers'] eq '1'}
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" class="custom-checkbox" name="supplier" value="Supplier"  {if $d->type == 'Customer,Supplier' || $d->type == 'Supplier' } checked {/if}>
-                    {$_L['Supplier']}
-                </label>
-            </div>
-        {/if}
-    </div>
 
     <div class="mb-3"><label for="tags"><span class="h6">{$_L['Tags']}</span></label>
 
@@ -400,6 +402,36 @@
             for (var m = 0; m < individualOnly.length; m++) {
                 individualOnly[m].style.display = isIndividual ? '' : 'none';
             }
+
+            // Supplier-only contacts are never reported to ZATCA: drop the customer-only
+            // required markers and hide client-portal fields.
+            var customerEl = root.querySelector('#edit_type_customer');
+            var supplierEl = root.querySelector('#edit_type_supplier');
+            var supplierOnly = !!(supplierEl && supplierEl.checked) && !(customerEl && customerEl.checked);
+
+            var typeLabels = root.querySelectorAll('.js-party-type-label');
+            for (var n = 0; n < typeLabels.length; n++) {
+                typeLabels[n].textContent = supplierOnly ? 'Supplier Type' : 'Buyer Type';
+            }
+
+            var customerReq = root.querySelectorAll('.customer-req');
+            for (var q = 0; q < customerReq.length; q++) {
+                customerReq[q].style.display = supplierOnly ? 'none' : '';
+            }
+
+            var supplierHints = root.querySelectorAll('.supplier-only-hint');
+            for (var h = 0; h < supplierHints.length; h++) {
+                supplierHints[h].style.display = supplierOnly ? '' : 'none';
+            }
+
+            var customerOnly = root.querySelectorAll('.customer-only');
+            for (var c = 0; c < customerOnly.length; c++) {
+                if (supplierOnly) {
+                    customerOnly[c].style.display = 'none';
+                } else if (!customerOnly[c].classList.contains('buyer-after-type')) {
+                    customerOnly[c].style.display = '';
+                }
+            }
         }
 
         function fillCompanyFields(company) {
@@ -458,6 +490,11 @@
 
         if (buyerTypeEl) {
             buyerTypeEl.addEventListener('change', applyEditBuyerTypeRules);
+        }
+
+        var contactTypeEls = root.querySelectorAll('.js-contact-type');
+        for (var t = 0; t < contactTypeEls.length; t++) {
+            contactTypeEls[t].addEventListener('change', applyEditBuyerTypeRules);
         }
         if (companySelectEl) {
             companySelectEl.addEventListener('change', function () {
