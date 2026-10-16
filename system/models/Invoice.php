@@ -122,6 +122,23 @@ class Invoice extends Model
                 'zatca_last_response',
                 "MEDIUMTEXT NULL AFTER `zatca_last_submit_at`"
             );
+
+            // 1 = print/PDF on pre-printed letterhead paper (company header & footer hidden)
+            self::ensureColumn(
+                $pdo,
+                'sys_invoices',
+                'hide_header_footer',
+                "TINYINT(1) NOT NULL DEFAULT 0"
+            );
+        }
+
+        if (self::tableExists($pdo, 'sys_quotes')) {
+            self::ensureColumn(
+                $pdo,
+                'sys_quotes',
+                'hide_header_footer',
+                "TINYINT(1) NOT NULL DEFAULT 0"
+            );
         }
 
         if (!self::tableExists($pdo, 'sys_zatca_logs')) {
@@ -308,6 +325,67 @@ class Invoice extends Model
         }
 
         return $invoice_number . ($next_invoice->cn ?? $next_invoice->id);
+    }
+
+    /**
+     * ZATCA buyer details a Standard Tax Invoice (company buyer) cannot be issued without.
+     * Customers created from the Quote screen may be missing them, since a quotation is
+     * never reported to ZATCA, so they are checked again before an invoice is created.
+     *
+     * @return string error messages joined with <br>, empty when the buyer is complete
+     */
+    public static function buyerZatcaErrors($contact)
+    {
+        if (!$contact || strtolower(trim((string) $contact['buyer_type'])) !== 'company') {
+            return '';
+        }
+
+        $company = !empty($contact['cid']) ? ORM::for_table('sys_companies')->find($contact['cid']) : false;
+
+        $pick = static function ($contact_value, $company_field) use ($company) {
+            $value = trim((string) $contact_value);
+            if ($value === '' && $company && isset($company[$company_field])) {
+                $value = trim((string) $company[$company_field]);
+            }
+
+            return $value;
+        };
+
+        $digits = static function ($value) {
+            return class_exists('InputVat') ? InputVat::normalizeDigits($value) : preg_replace('/\D+/', '', (string) $value);
+        };
+
+        $missing = [];
+
+        if (!preg_match('/^3\d{13}3$/', $digits($pick($contact['tax_number'], 'vat_number')))) {
+            $missing[] = 'VAT Number (15 digits, starts and ends with 3)';
+        }
+        if (!preg_match('/^\d{10}$/', $digits($pick($contact['entity_number'], 'crn_number')))) {
+            $missing[] = 'Unified No. (700#)';
+        }
+        if ($digits($pick('', 'building_number')) === '') {
+            $missing[] = 'Building Number';
+        }
+        if ($pick($contact['address'], 'address1') === '') {
+            $missing[] = 'Address';
+        }
+        if ($pick($contact['city'], 'city') === '') {
+            $missing[] = 'City';
+        }
+        if ($pick($contact['zip'], 'zip') === '') {
+            $missing[] = 'ZIP/Postal Code';
+        }
+        if ($pick($contact['country'], 'country') === '') {
+            $missing[] = 'Country';
+        }
+
+        if (!$missing) {
+            return '';
+        }
+
+        return 'Customer ZATCA details are incomplete (required for a Standard Tax Invoice): '
+            . implode(', ', $missing)
+            . '. Please update the customer before issuing an invoice. <br>';
     }
 
     private static function pdo()

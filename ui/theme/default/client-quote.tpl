@@ -7,6 +7,19 @@
             <div class="panel-container">
                 <div class="panel-content">
 
+{if $d['hide_header_footer']}
+    {* Pre-printed letterhead: only the quote prints, without our name/logo/address, leaving room for the paper's own header & footer *}
+    <style>
+        @media print {
+            @page { margin-top: {$config['letterhead_top_margin_mm']|default:45}mm; margin-bottom: {$config['letterhead_bottom_margin_mm']|default:30}mm; }
+            body * { visibility: hidden; }
+            *:has(.invoice) { position: static !important; transform: none !important; overflow: visible !important; }
+            .invoice, .invoice * { visibility: visible; }
+            .invoice { position: absolute; left: 0; top: 0; width: 100%; }
+            .invoice .letterhead-brand, .invoice .no-print { display: none !important; }
+        }
+    </style>
+{/if}
                     <div class="invoice">
                         <header class="clearfix">
                             <div class="text-end">
@@ -15,7 +28,7 @@
 
 
 
-                                <div class="btn-group">
+                                <div class="btn-group no-print">
                                     <a href="{$_url}client/qpdf/{$d['id']}/token_{$d['vtoken']}" class="btn btn-primary"><i class="fal fa-print"></i> {$_L['View PDF']}</a>
                                     <a href="{$_url}client/qpdf/{$d['id']}/token_{$d['vtoken']}/dl/" class="btn btn-info"><i class="fal fa-file-pdf-o"></i> {$_L['Download PDF']}</a>
 
@@ -37,7 +50,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-12 mt-md">
-                                    <h2 class="h2 mt-none mb-sm text-dark text-bold">{$config['CompanyName']}</h2>
+                                    <h2 class="h2 mt-none mb-sm text-dark text-bold letterhead-brand">{$config['CompanyName']}</h2>
                                     <h4 class="h4 m-none text-dark text-bold">{$_L['Quote']} #{$d['invoicenum']}{if $d['cn'] neq ''} {$d['cn']} {else} {$d['id']} {/if}</h4>
 
                                 </div>
@@ -85,12 +98,12 @@
                                 <div class="col-md-6">
                                     <div class="bill-data text-end">
 
-                                        <div class="ib">
-                                            <img src="{$app_url}storage/system/{$config['logo_default']}" alt="Logo" style="margin-bottom: 15px;">
+                                        <div class="ib letterhead-brand">
+                                            <img src="{$app_url}storage/system/{$config['logo_default']}" alt="Logo" style="margin-bottom: 15px; width: auto; height: auto; max-width: 230px; max-height: 130px;">
 
                                         </div>
 
-                                        <address class="ib mr-xlg">
+                                        <address class="ib mr-xlg letterhead-brand">
                                             {$config['caddress']}
                                         </address>
 

@@ -11,6 +11,9 @@
                     {if $modal_contact_type eq 'supplier'}
                         <style>#rform .customer-req { display: none; }</style>
                         <small class="help-block d-block mb-2">Supplier: only the name is required. Enter the VAT number to claim input VAT on purchases.</small>
+                    {elseif $modal_contact_type eq 'quote'}
+                        <style>#rform .customer-req { display: none; }</style>
+                        <small class="help-block d-block mb-2">Quote: only the customer / company name is required. VAT, Unified No. and national address are optional here, but will be required before an invoice can be issued (ZATCA).</small>
                     {/if}
                     <div class="mb-3"><label for="buyer_type">{if $modal_contact_type eq 'supplier'}Supplier Type{else}Buyer Type{/if} <span class="text-danger">*</span></label>
                         <select id="buyer_type" name="buyer_type" class="form-control" required onchange="if (window.applyInvoiceContactModalBuyerTypeRules) { window.applyInvoiceContactModalBuyerTypeRules(); }">
@@ -147,7 +150,7 @@
         }
 
         function bindDigitOnlyInputs() {
-            var digitInputs = document.querySelectorAll('#ajax-modal .js-digits-only');
+            var digitInputs = document.querySelectorAll('#rform .js-digits-only');
 
             for (var i = 0; i < digitInputs.length; i++) {
                 applyDigitOnlyMask(digitInputs[i]);
@@ -160,10 +163,10 @@
             var isCompany = buyerType === 'company';
             var isIndividual = buyerType === 'individual';
 
-            var afterType = document.querySelectorAll('#ajax-modal .buyer-after-type');
-            var companySelectorOnly = document.querySelectorAll('#ajax-modal .buyer-company-selector-only');
-            var companyOnly = document.querySelectorAll('#ajax-modal .buyer-company-only');
-            var individualOnly = document.querySelectorAll('#ajax-modal .buyer-individual-only');
+            var afterType = document.querySelectorAll('#rform .buyer-after-type');
+            var companySelectorOnly = document.querySelectorAll('#rform .buyer-company-selector-only');
+            var companyOnly = document.querySelectorAll('#rform .buyer-company-only');
+            var individualOnly = document.querySelectorAll('#rform .buyer-individual-only');
 
             for (var i = 0; i < afterType.length; i++) {
                 afterType[i].style.display = hasSelection ? '' : 'none';
@@ -183,7 +186,7 @@
         }
 
         function fillModalCompanyFields(company) {
-            var modalRoot = document.getElementById('ajax-modal') || document;
+            var modalRoot = document.getElementById('rform') || document;
             var map = {
                 company: company.company_name,
                 company_url: company.url,

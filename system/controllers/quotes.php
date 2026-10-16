@@ -272,6 +272,7 @@ switch ($action) {
             $d->subject = $subject;
             $d->stage = _post('stage');
             $d->validuntil = _post('edate');
+            $d->hide_header_footer = _post('hide_header_footer') ? 1 : 0;
             $d->userid = $cid;
             $d->account = $u['account'];
             $d->invoicenum = $invoicenum;
@@ -517,6 +518,7 @@ switch ($action) {
                 $d->subject = $subject;
                 $d->stage = _post('stage');
                 $d->validuntil = _post('edate');
+                $d->hide_header_footer = _post('hide_header_footer') ? 1 : 0;
                 $d->userid = $cid;
                 $d->account = $u['account'];
                 $d->invoicenum = $invoicenum;
@@ -1133,6 +1135,9 @@ switch ($action) {
             $msg = '';
             if ($cid == '') {
                 $msg .= $_L['select_a_contact'] . ' <br> ';
+            } else {
+                // The quote's customer may have been added without ZATCA details.
+                $msg .= Invoice::buyerZatcaErrors($u);
             }
 
             $notes = _post('notes');
@@ -1173,6 +1178,7 @@ switch ($action) {
                 $d->r = $r;
                 $d->nd = $nd;
                 $d->quote_id = $iid;
+                $d->hide_header_footer = !empty($q['hide_header_footer']) ? 1 : 0;
                 $d->invoicenum = $invoicenum;
                 $d->tax2 = '0.00';
                 $d->taxrate2 = '0.00';

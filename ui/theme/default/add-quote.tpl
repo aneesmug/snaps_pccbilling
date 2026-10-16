@@ -137,6 +137,14 @@
                                                             class="fal fa-minus-circle"></i> {$_L['Set Discount']}</a>
                                             </div>
 
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="hide_header_footer" name="hide_header_footer" value="1">
+                                                    <label class="form-check-label" for="hide_header_footer">{__('Print on letterhead paper (hide header & footer)')}</label>
+                                                </div>
+                                                <small class="form-text text-muted">{__('Tick when printing on A4 paper that already has your header and footer printed.')}</small>
+                                            </div>
+
 
                                         </div>
                                     </div>
@@ -360,9 +368,9 @@
                             var $indicator = $("#invoice_type_indicator");
                             var buyerType = $.trim(String(data.buyer_type || '')).toLowerCase();
                             if (buyerType === 'company') {
-                                $indicator.html('<span class="badge bg-info">{__("Standard Tax Invoice")}</span>');
+                                $indicator.html('<span class="badge bg-info text-white">{__("Standard Tax Invoice")}</span>');
                             } else if (buyerType === 'individual') {
-                                $indicator.html('<span class="badge bg-secondary">{__("Simplified Tax Invoice")}</span>');
+                                $indicator.html('<span class="badge bg-secondary text-white">{__("Simplified Tax Invoice")}</span>');
                             } else {
                                 $indicator.html('');
                             }
@@ -492,7 +500,7 @@
                 e.preventDefault();
                 // create the backdrop and wait for next modal to be triggered
                 $.fancybox.open({
-                    src  : _url + 'contacts/modal_add/',
+                    src  : _url + 'contacts/modal_add/quote/',
                     type : 'ajax',
                     opts : {
                         afterShow : function( instance, current ) {
@@ -578,21 +586,13 @@
                 if (buyerType !== 'company' && buyerType !== 'individual') {
                     errors.push('Buyer Type is required');
                 } else if (buyerType === 'individual') {
+                    // Quote: only the name is required; ZATCA details are checked only when entered.
                     if (!accountName) { errors.push('Full Name is required'); }
-                    if (!phone) { errors.push('Phone is required'); }
                     if (idIqama && !/^\d{10}$/.test(idIqama)) { errors.push('ID / Iqama must be exactly 10 digits'); }
                 } else {
-                    if (!selectedCompanyId) { errors.push('Registered Company is required'); }
                     if (!companyName) { errors.push('Company Name is required'); }
-                    if (!phone) { errors.push('Phone is required'); }
-                    if (!address) { errors.push('Address is required'); }
-                    if (!city) { errors.push('City is required'); }
-                    if (!state) { errors.push('State/Region is required'); }
-                    if (!zip) { errors.push('ZIP/Postal Code is required'); }
-                    if (!country) { errors.push('Country is required'); }
-                    if (!buildingNumber) { errors.push('Building Number is required'); }
-                    if (!/^3\d{13}3$/.test(vatNumber)) { errors.push('VAT Number must be 15 digits and start/end with 3'); }
-                    if (!/^\d{10}$/.test(crnNumber)) { errors.push('Unified No. (700#) must be 10 digits'); }
+                    if (vatNumber && !/^3\d{13}3$/.test(vatNumber)) { errors.push('VAT Number must be 15 digits and start/end with 3'); }
+                    if (crnNumber && !/^\d{10}$/.test(crnNumber)) { errors.push('Unified No. (700#) must be 10 digits'); }
                 }
 
                 if (errors.length > 0) {
@@ -602,6 +602,7 @@
 
                 var _url = $("#_url").val();
                 $.post(_url + 'contacts/add-post/', {
+                    quote_mode: '1',
                     buyer_type: buyerType,
                     cid: isCompany ? selectedCompanyId : '',
                     account: buyerType === 'individual' ? accountName : '',

@@ -1399,6 +1399,8 @@ switch ($action) {
         $msg = '';
         if ($cid == '') {
             $msg .= $_L['select_a_contact'] . ' <br /> ';
+        } elseif (!$invoice) {
+            $msg .= Invoice::buyerZatcaErrors($u);
         }
 
         $notes = _post('notes');
@@ -1717,6 +1719,7 @@ switch ($action) {
             $invoice->pid = _post('pid', 0);
             $invoice->contract_id = $contract_id;
             $invoice->allow_partial_payment = _post('allow_partial_payment',0);
+            $invoice->hide_header_footer = _post('hide_header_footer') ? 1 : 0;
 
             // Check for duplicate full invoice number (prefix + number)
             $existingInvoice = Invoice::where('invoicenum', $invoicenum)

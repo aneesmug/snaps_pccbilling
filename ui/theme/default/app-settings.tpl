@@ -147,6 +147,21 @@
 
                                 </div>
 
+                                <div class="mb-3">
+                                    <label>{__('Letterhead Paper Margins (mm)')}</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label for="letterhead_top_margin_mm" class="form-label small">{__('Top (pre-printed header height)')}</label>
+                                            <input type="number" class="form-control" id="letterhead_top_margin_mm" name="letterhead_top_margin_mm" min="0" max="150" step="1" value="{$config['letterhead_top_margin_mm']|default:45}">
+                                        </div>
+                                        <div class="col-6">
+                                            <label for="letterhead_bottom_margin_mm" class="form-label small">{__('Bottom (pre-printed footer height)')}</label>
+                                            <input type="number" class="form-control" id="letterhead_bottom_margin_mm" name="letterhead_bottom_margin_mm" min="0" max="150" step="1" value="{$config['letterhead_bottom_margin_mm']|default:30}">
+                                        </div>
+                                    </div>
+                                    <span class="help-block">{__('Blank space left at the top and bottom of each A4 page when a quote or invoice has "Print on letterhead paper (hide header & footer)" ticked.')}</span>
+                                </div>
+
 
                                 <div class="mb-3">
                                     <label for="show_quantity_as">{$_L['Default']} : {$_L['Show quantity as']}</label>

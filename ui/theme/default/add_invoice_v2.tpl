@@ -1155,9 +1155,9 @@
                             var $indicator = $("#invoice_type_indicator");
                             var buyerType = $.trim(String(data.buyer_type || '')).toLowerCase();
                             if (buyerType === 'company') {
-                                $indicator.html('<span class="badge bg-info">{__("Standard Tax Invoice")}</span>');
+                                $indicator.html('<span class="badge bg-info text-white">{__("Standard Tax Invoice")}</span>');
                             } else if (buyerType === 'individual') {
-                                $indicator.html('<span class="badge bg-secondary">{__("Simplified Tax Invoice")}</span>');
+                                $indicator.html('<span class="badge bg-secondary text-white">{__("Simplified Tax Invoice")}</span>');
                             } else {
                                 $indicator.html('');
                             }

@@ -809,6 +809,12 @@ switch ($action) {
         // input VAT on purchases, but is not mandatory to create the supplier).
         $is_customer = strpos($type, 'Customer') !== false;
 
+        // Customers added from the Quote screen: a quotation is never reported to ZATCA,
+        // so only the name is required there. ZATCA buyer details are still format-checked
+        // when entered and are enforced again when an invoice is created for the customer.
+        $quote_mode = _post('quote_mode') === '1';
+        $require_zatca_buyer = $is_customer && !$quote_mode;
+
         if ($currency == '') {
             $currency = '0';
         }
@@ -827,11 +833,11 @@ switch ($action) {
             $msg .= ($is_customer ? 'Buyer Type' : 'Supplier Type') . ' is required <br>';
         }
 
-        if ($is_customer && $buyer_type === 'company' && $company_id === '') {
+        if ($require_zatca_buyer && $buyer_type === 'company' && $company_id === '') {
             $msg .= 'Registered Company is required <br>';
         }
 
-        if (!$is_customer) {
+        if (!$require_zatca_buyer) {
             if ($buyer_type === 'company' && _post('company') == '') {
                 $msg .= $_L['Company Name'] . ' is required <br>';
             }
@@ -877,7 +883,7 @@ switch ($action) {
             }
         }
 
-        if ($is_customer && $buyer_type === 'individual' && $phone == '') {
+        if ($require_zatca_buyer && $buyer_type === 'individual' && $phone == '') {
             $msg .= $_L['Phone'] . ' is required <br>';
         }
 
@@ -955,6 +961,34 @@ switch ($action) {
             if ($buyer_type === 'company' && $company_id !== '' && $company_id !== '0' && $company_id !== '__new__') {
                 $company_db = db_find_one('sys_companies', $company_id);
                 if ($company_db) {
+                    if (!$require_zatca_buyer) {
+                        // Company details are optional here, so only fill in what was entered
+                        // and never wipe ZATCA details already stored on the registered company.
+                        $company_updates = [
+                            'company_name'    => _post('company'),
+                            'phone'           => $phone,
+                            'email'           => $email,
+                            'url'             => _post('company_url'),
+                            'logo_url'        => _post('logo_url'),
+                            'address1'        => $address,
+                            'city'            => $city,
+                            'state'           => $state,
+                            'zip'             => $zip,
+                            'country'         => $country,
+                            'vat_number'      => $vat_number,
+                            'crn_number'      => $crn_number,
+                            'building_number' => $building_number,
+                        ];
+                        foreach ($company_updates as $field => $value) {
+                            if ((string) $value !== '') {
+                                $company_db->$field = $value;
+                            }
+                        }
+                        $company_db->save();
+
+                        $company = $company_db->company_name;
+                        $cid = $company_id;
+                    } else {
                     // Company info is required whenever buyer_type is company, so keep the
                     // registered company's record fully in sync with what was submitted here.
                     $company_db->company_name    = _post('company');
@@ -974,6 +1008,7 @@ switch ($action) {
 
                     $company = $company_db->company_name;
                     $cid = $company_id;
+                    }
                 }
             } elseif ($is_new_company) {
                 $company = _post('company');
@@ -1957,7 +1992,10 @@ $country
 
         // Purchases load this modal as contacts/modal_add/supplier/ so customer-only
         // (ZATCA buyer) required markers can be dropped.
-        $ui->assign('modal_contact_type', route(2) === 'supplier' ? 'supplier' : 'customer');
+        // Quotes load it as contacts/modal_add/quote/ — a quotation is not sent to ZATCA,
+        // so the same markers are dropped and only the name is required.
+        $modal_contact_type = route(2);
+        $ui->assign('modal_contact_type', in_array($modal_contact_type, ['supplier', 'quote'], true) ? $modal_contact_type : 'customer');
 
         view('modal_add_contact');
 

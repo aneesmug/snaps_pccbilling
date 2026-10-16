@@ -1,4 +1,10 @@
 <?php
+// Pre-printed letterhead: drop our logo/company block and footer text and push the
+// page header/footer inwards so they clear the header & footer already on the paper.
+$hide_header_footer = !empty($d['hide_header_footer']);
+$letterhead_top_mm = isset($config['letterhead_top_margin_mm']) && is_numeric($config['letterhead_top_margin_mm']) ? (float) $config['letterhead_top_margin_mm'] : 45;
+$letterhead_bottom_mm = isset($config['letterhead_bottom_margin_mm']) && is_numeric($config['letterhead_bottom_margin_mm']) ? (float) $config['letterhead_bottom_margin_mm'] : 30;
+
 if ($config['rtl'] == 1) { ?>
 <html dir="rtl">
 <?php } else { ?>
@@ -8,8 +14,15 @@ if ($config['rtl'] == 1) { ?>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
     @page {
+        <?php if ($hide_header_footer) { ?>
+        margin-header: <?php echo $letterhead_top_mm; ?>mm;
+        margin-top: <?php echo $letterhead_top_mm + 42; ?>mm;
+        margin-footer: <?php echo $letterhead_bottom_mm; ?>mm;
+        margin-bottom: <?php echo $letterhead_bottom_mm + 14; ?>mm;
+        <?php } else { ?>
         margin-top: 83mm;
         margin-bottom: 25mm;
+        <?php } ?>
         margin-left: 8mm;
         margin-right: 8mm;
         header: page-header;
@@ -108,6 +121,7 @@ $logo_path = APP_URL . '/storage/system/' . $logo_file;
 ?>
 
 <htmlpageheader name="page-header">
+<?php if (!$hide_header_footer) { ?>
 <table class="no-border" style="width:100%; margin-bottom:8px;">
     <tr>
         <td style="border:0; width:45%; vertical-align:middle; text-align:left;">
@@ -121,6 +135,7 @@ $logo_path = APP_URL . '/storage/system/' . $logo_file;
 </table>
 
 <div style="border-top:2px solid #333; margin-bottom:8px;"></div>
+<?php } ?>
 
 <table style="width:100%; border-collapse:collapse; border:1px solid #aaa; margin-bottom:4px;">
     <tr>
@@ -178,7 +193,7 @@ $logo_path = APP_URL . '/storage/system/' . $logo_file;
                     </td>
                 </tr>
             </table>
-            <?php if (!empty($config['invoice_footer_html'])) { ?>
+            <?php if (!$hide_header_footer && !empty($config['invoice_footer_html'])) { ?>
                 <div style="font-size:8px; margin-top:4px;"><?php echo $config['invoice_footer_html']; ?></div>
             <?php } ?>
             <div style="font-size:7px; color:#999; text-align:right; margin-top:3px;">

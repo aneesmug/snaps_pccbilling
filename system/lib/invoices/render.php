@@ -27,7 +27,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<?php
+    // Pre-printed letterhead: hide our logo/company block and footer text and keep the
+    // top and bottom of the printed page blank for the header & footer on the paper.
+    $hide_header_footer = !empty($d['hide_header_footer']);
+    $letterhead_top_mm = isset($config['letterhead_top_margin_mm']) && is_numeric($config['letterhead_top_margin_mm']) ? (float) $config['letterhead_top_margin_mm'] : 45;
+    $letterhead_bottom_mm = isset($config['letterhead_bottom_margin_mm']) && is_numeric($config['letterhead_bottom_margin_mm']) ? (float) $config['letterhead_bottom_margin_mm'] : 30;
+    ?>
     <style>
+        <?php if ($hide_header_footer) { ?>
+        @page { margin-top: <?php echo $letterhead_top_mm; ?>mm; margin-bottom: <?php echo $letterhead_bottom_mm; ?>mm; }
+        @media screen {
+            /* Preview the blank area kept for the paper's pre-printed header */
+            #page-wrap::before {
+                content: 'Pre-printed letterhead header area (<?php echo $letterhead_top_mm; ?> mm)';
+                display: flex; align-items: center; justify-content: center;
+                height: <?php echo $letterhead_top_mm; ?>mm; margin-bottom: 4px;
+                border: 1px dashed #bbb; color: #aaa; font-size: 12px; box-sizing: border-box;
+            }
+        }
+        <?php } ?>
 
         * { margin: 0; padding: 0; }
         body {
@@ -546,6 +565,7 @@ $is_cancelled_invoice = isset($d['status']) && strcasecmp((string) $d['status'],
     </div>
 
     <div style="border: 1px solid #ddd; border-radius: 0; background: #fff; padding: 12px 12px 8px; margin-bottom: 20px;">
+        <?php if (!$hide_header_footer) { ?>
         <table width="100%" style="border: 0; margin-bottom: 12px;">
             <tr>
                 <td style="border: 0; width: 45%; text-align: left; vertical-align: middle;">
@@ -559,6 +579,7 @@ $is_cancelled_invoice = isset($d['status']) && strcasecmp((string) $d['status'],
         </table>
 
         <div style="border-top: 2px solid #333; margin-bottom: 10px;"></div>
+        <?php } ?>
 
         <table width="100%" style="border-collapse: collapse; border: 1px solid #aaa; margin-bottom: 4px;">
             <tr>
@@ -735,7 +756,7 @@ $is_cancelled_invoice = isset($d['status']) && strcasecmp((string) $d['status'],
             <strong>Amount in words:</strong> <?php echo htmlspecialchars(ucfirst($amount_words['en'])); ?>
             <span style="float: right; direction: rtl; text-align: right;"><strong>المبلغ كتابةً:</strong> <?php echo htmlspecialchars($amount_words['ar']); ?></span>
         </div>
-        <?php if(isset($config['invoice_footer_html']) && !empty($config['invoice_footer_html'])){ ?>
+        <?php if(!$hide_header_footer && isset($config['invoice_footer_html']) && !empty($config['invoice_footer_html'])){ ?>
             <div style="font-size: 8px; margin-top: 4px;"><?php echo $config['invoice_footer_html']; ?></div>
         <?php } ?>
         <div style="font-size: 7px; color: #999; text-align: right; margin-top: 3px;">Page 1 of 1</div>

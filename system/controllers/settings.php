@@ -1864,6 +1864,13 @@ switch ($action) {
                 update_option('invoice_footer_html', $data['invoice_footer_html']);
             }
 
+            foreach (['letterhead_top_margin_mm' => 45, 'letterhead_bottom_margin_mm' => 30] as $option => $default) {
+                if (isset($data[$option])) {
+                    $mm = is_numeric($data[$option]) ? (float) $data[$option] : $default;
+                    update_option($option, (string) max(0, min(150, $mm)));
+                }
+            }
+
             if (!empty($data['i_driver'])) {
                 update_option('i_driver', $data['i_driver']);
             }

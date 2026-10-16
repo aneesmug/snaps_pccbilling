@@ -666,6 +666,18 @@
                                             </label>
 
                                         </div>
+                                        <div class="col-sm-4">
+
+                                            <div class="mb-3">
+                                                <label for="hide_header_footer">{__('Print on letterhead paper (hide header & footer)')}</label>
+                                            </div>
+
+                                            <label class="switch s-icons s-outline s-outline-primary">
+                                                <input type="checkbox" id="hide_header_footer" name="hide_header_footer" value="1" {if $invoice && $invoice->hide_header_footer}checked{/if}>
+                                                <span class="slider round"></span>
+                                            </label>
+
+                                        </div>
                                     </div>
 
 

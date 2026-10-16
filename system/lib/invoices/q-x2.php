@@ -1,9 +1,19 @@
+<?php
+// Pre-printed letterhead: skip our logo/company header and leave blank space at the
+// top and bottom of every page for the header & footer already printed on the paper.
+$hide_header_footer = !empty($d['hide_header_footer']);
+$letterhead_top_mm = isset($config['letterhead_top_margin_mm']) && is_numeric($config['letterhead_top_margin_mm']) ? (float) $config['letterhead_top_margin_mm'] : 45;
+$letterhead_bottom_mm = isset($config['letterhead_bottom_margin_mm']) && is_numeric($config['letterhead_bottom_margin_mm']) ? (float) $config['letterhead_bottom_margin_mm'] : 30;
+?>
 <html>
 
 
 <head>
 
     <style>
+        <?php if ($hide_header_footer) { ?>
+        @page { margin-top: <?php echo $letterhead_top_mm; ?>mm; margin-bottom: <?php echo $letterhead_bottom_mm; ?>mm; }
+        <?php } ?>
 
         * { margin: 0; padding: 0; }
         body {
@@ -76,12 +86,14 @@
  echo $d['invoicenum'] . $dispid;
  ?></strong></span>
             </td>
+            <?php if (!$hide_header_footer) { ?>
             <td style="border: 0;  text-align: right" width="62%"><div id="logo" style="font-size:18px">
                     <img id="image" src="<?php echo APP_URL; ?>/storage/system/<?php echo $config[
     'logo_default'
 ]; ?>" alt="logo" />  <br> <br>
                     <?php echo $config['caddress']; ?>
                 </div></td>
+            <?php } ?>
         </tr>
 
 
