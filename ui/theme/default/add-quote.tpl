@@ -422,6 +422,20 @@
 
             syncInvoiceRowButtons();
 
+            // New item lines default their Tax to "Yes" when a Sales TAX is selected.
+            function applyDefaultRowTax() {
+                var taxed = $('#tid').val() ? 'Yes' : 'No';
+                $("#invoice_items").find('select.taxed').not('.tax-default-set')
+                    .val(taxed).addClass('tax-default-set').trigger('change');
+            }
+
+            applyDefaultRowTax();
+
+            $('#tid').on('change', function () {
+                var taxed = $(this).val() ? 'Yes' : 'No';
+                $("#invoice_items").find('select.taxed').val(taxed).addClass('tax-default-set').trigger('change');
+            });
+
             $("#invoice_items").on('click', '.row-add', function () {
                 $('#blank-add').trigger('click');
             });
@@ -519,6 +533,7 @@
                         '<tr> <td><button type="button" class="btn btn-info btn-sm row-item-search" data-bs-toggle="tooltip" data-placement="top" title="{__("Add Product OR Service")}"><i class="fal fa-search"></i></button> <textarea class="form-control item_name" name="desc[]" rows="1"></textarea></td> <td><input type="text" class="form-control qty" value="" name="qty[]"></td> <td><input type="text" class="form-control item_price" name="amount[]" value=""></td> <td class="ltotal"><input type="text" class="form-control lvtotal" readonly value=""></td> <td> <select class="form-control taxed" name="taxed[]"> <option value="Yes">Yes</option> <option value="No" selected>No</option></select></td> <td class="row-action-cell text-center"></td></tr>'
                     );
                 syncInvoiceRowButtons();
+                applyDefaultRowTax();
 
             });
 
@@ -544,6 +559,7 @@
                 });
 
                 syncInvoiceRowButtons();
+                applyDefaultRowTax();
                 $itemLoadTargetRow = null;
 
                 $.fancybox.close();
