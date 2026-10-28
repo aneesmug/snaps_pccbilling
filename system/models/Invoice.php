@@ -428,6 +428,50 @@ class Invoice extends Model
         $pdo->exec($sql);
     }
 
+    /**
+     * Raise status to Paid / Partially Paid when recorded payments (credit) cover the total.
+     * Only upgrades, so a manual "Mark Paid" is never undone. Draft and Cancelled are left untouched.
+     * Accepts an ORM record, an Eloquent model or an id.
+     */
+    public static function syncPaymentStatus($invoice)
+    {
+        if (is_numeric($invoice)) {
+            $invoice = ORM::for_table('sys_invoices')->find($invoice);
+        }
+
+        if (!$invoice) {
+            return null;
+        }
+
+        $current = (string) $invoice->status;
+
+        if (in_array($current, ['Draft', 'Cancelled'], true)) {
+            return $current;
+        }
+
+        $total = round((float) $invoice->total, 2);
+        $credit = round((float) $invoice->credit, 2);
+
+        if ($total <= 0) {
+            return $current;
+        }
+
+        $status = $current;
+
+        if ($credit >= $total - 0.01) {
+            $status = 'Paid';
+        } elseif ($credit > 0 && $current !== 'Paid') {
+            $status = 'Partially Paid';
+        }
+
+        if ($status !== $current) {
+            $invoice->status = $status;
+            $invoice->save();
+        }
+
+        return $status;
+    }
+
     public function scopePaid($query)
     {
         return $query->where('status', '=', 'Paid');
@@ -597,6 +641,8 @@ class Invoice extends Model
                     exit();
                 }
             }
+
+            self::syncPaymentStatus($d);
 
             $items = ORM::for_table('sys_invoiceitems')
                 ->where('invoiceid', $id)

@@ -35,6 +35,8 @@ switch ($action) {
                 exit();
             }
 
+            Invoice::syncPaymentStatus($d);
+
             $items = ORM::for_table('sys_invoiceitems')
                 ->where('invoiceid', $id)
                 ->order_by_asc('id')

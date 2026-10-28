@@ -449,6 +449,7 @@ switch ($action) {
         $id = $routes['2'];
         $d = ORM::for_table('sys_invoices')->find($id);
         if ($d) {
+            Invoice::syncPaymentStatus($d);
             $invoice = Invoice::find($id);
 
             $render = route(4, 'invoice');
@@ -712,6 +713,8 @@ switch ($action) {
             if (!$sales_all_data && $d->aid != $user->id) {
                 permissionDenied();
             }
+
+            Invoice::syncPaymentStatus($d);
 
             $items = ORM::for_table('sys_invoiceitems')
                 ->where('invoiceid', $id)
@@ -1617,6 +1620,10 @@ switch ($action) {
             $status = _post('status');
             if ($status != 'Draft') {
                 $status = 'Unpaid';
+                // keep Paid / Partially Paid / Cancelled when editing an existing invoice
+                if ($invoice && !in_array((string) $invoice->status, ['', 'Draft', 'Unpaid'], true)) {
+                    $status = $invoice->status;
+                }
             }
 
             $receipt_number = _post('receipt_number');
@@ -1741,6 +1748,9 @@ switch ($action) {
             }
 
             $invoice->save();
+
+            // editing must not wipe out payments already received
+            Invoice::syncPaymentStatus($invoice);
 
             $invoiceid = $invoice->id;
             $description = $data['desc'];
@@ -2404,7 +2414,10 @@ switch ($action) {
                 if ($status == 'Draft') {
                     $d->status = 'Draft';
                 } elseif ($status == 'Published') {
-                    $d->status = 'Unpaid';
+                    // only publish drafts; keep Paid / Partially Paid / Cancelled as they are
+                    if (in_array((string) $d->status, ['', 'Draft'], true)) {
+                        $d->status = 'Unpaid';
+                    }
                 } else {
                 }
 
@@ -2420,6 +2433,9 @@ switch ($action) {
                 $d->title = $title;
 
                 $d->save();
+
+                // editing must not wipe out payments already received
+                Invoice::syncPaymentStatus($d);
 
                 $invoiceid = $iid;
                 $description = $data['desc'];
@@ -2529,6 +2545,7 @@ switch ($action) {
         $id = $routes['2'];
         $d = ORM::for_table('sys_invoices')->find($id);
         if ($d) {
+            Invoice::syncPaymentStatus($d);
             $items = ORM::for_table('sys_invoiceitems')
                 ->where('invoiceid', $id)
                 ->order_by_asc('id')
@@ -2595,6 +2612,7 @@ switch ($action) {
         $id = $routes['2'];
         $d = ORM::for_table('sys_invoices')->find($id);
         if ($d) {
+            Invoice::syncPaymentStatus($d);
             // find all activity for this user
 
             $items = ORM::for_table('sys_invoiceitems')
@@ -3244,12 +3262,13 @@ data-d-group="3" value="' .
 
             $i = ORM::for_table('sys_invoices')->find($iid);
             if ($i) {
-                $pc = $i['credit'];
-                $it = $i['total'];
-                $dp = $it - $pc;
-                $i->status = $dp == $amount || $dp < $amount ? 'Paid' : 'Partially Paid';
-                $i->credit = $pc + $amount;
+                $i->credit = (float) $i['credit'] + (float) $amount;
+                if ($i['status'] == 'Draft') {
+                    // a payment publishes the invoice, as before
+                    $i->status = 'Unpaid';
+                }
                 $i->save();
+                Invoice::syncPaymentStatus($i);
             }
 
             echo $tid;
